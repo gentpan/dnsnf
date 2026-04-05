@@ -1,0 +1,8 @@
+const _domain__vue_vue_type_style_index_0_scoped_1675ae15_lang = ".lookup-page[data-v-1675ae15]{display:flex;flex-direction:column}.lookup-panel[data-v-1675ae15]{background:#fff;border:1px solid var(--panel-border);border-radius:0;padding:16px}.panel-title-main[data-v-1675ae15]{align-items:center;display:inline-flex;font-weight:800;gap:9px}.lookup-hint[data-v-1675ae15]{color:#6c757d;font-size:13px;margin:6px 0 8px}.lookup-result[data-v-1675ae15]{font-family:var(--result-font);margin-top:20px}.privacy-quote[data-v-1675ae15]{margin-top:10px}.lookup-result[data-v-1675ae15] .result-panel h3{font-family:Poppins,PingFang SC,Microsoft YaHei,Segoe UI,sans-serif}.lookup-result[data-v-1675ae15] .record-name,.lookup-result[data-v-1675ae15] .result-row>span,.lookup-result[data-v-1675ae15] .reverse-head,.lookup-result[data-v-1675ae15] .value-note,.lookup-result[data-v-1675ae15] .value-title{font-family:Poppins,PingFang SC,Microsoft YaHei,Segoe UI,sans-serif}";
+
+const _domain_Styles_jQpoVGDM = [
+  _domain__vue_vue_type_style_index_0_scoped_1675ae15_lang
+];
+
+export { _domain_Styles_jQpoVGDM as default };
+//# sourceMappingURL=_domain_-styles.jQpoVGDM.mjs.map

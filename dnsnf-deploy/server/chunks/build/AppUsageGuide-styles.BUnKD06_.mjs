@@ -1,0 +1,8 @@
+const AppUsageGuide_vue_vue_type_style_index_0_scoped_5227365a_lang = ".usage-guide[data-v-5227365a]{background:var(--app-surface);border:1px solid var(--panel-border);margin:14px 0;padding:16px 18px}.usage-guide-head[data-v-5227365a]{align-items:center;color:var(--app-accent);display:inline-flex;font-size:15px;font-weight:700;gap:9px}.usage-guide-desc[data-v-5227365a]{color:var(--app-text-soft);font-size:14px;line-height:1.65;margin:10px 0 0}.usage-guide-list[data-v-5227365a]{display:flex;flex-direction:column;gap:8px;list-style:none;margin:14px 0 0;padding:0}.usage-guide-item[data-v-5227365a]{align-items:baseline;background:color-mix(in srgb,var(--app-surface-2) 88%,transparent);border:1px solid var(--panel-border);display:flex;gap:10px;padding:10px 12px;width:100%}.usage-guide-index[data-v-5227365a]{align-items:center;background:color-mix(in srgb,var(--app-accent) 12%,transparent);border:1px solid var(--panel-border);color:var(--app-accent);display:inline-flex;flex:0 0 auto;font-size:12px;font-weight:700;height:24px;justify-content:center;line-height:1;width:24px}.usage-guide-text[data-v-5227365a]{color:var(--app-text);font-size:13px;line-height:1.7}.usage-guide-tags[data-v-5227365a]{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}.usage-guide-tag[data-v-5227365a]{background:color-mix(in srgb,var(--app-accent) 12%,transparent);border:1px solid var(--panel-border);color:var(--app-accent);font-size:12px;line-height:1;padding:7px 10px}@media(max-width:640px){.usage-guide[data-v-5227365a]{padding:14px}}";
+
+const AppUsageGuideStyles_BUnKD06_ = [
+  AppUsageGuide_vue_vue_type_style_index_0_scoped_5227365a_lang
+];
+
+export { AppUsageGuideStyles_BUnKD06_ as default };
+//# sourceMappingURL=AppUsageGuide-styles.BUnKD06_.mjs.map

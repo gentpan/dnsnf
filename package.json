@@ -1,0 +1,36 @@
+{
+  "name": "dns-frontend",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20 <25"
+  },
+  "scripts": {
+    "predev": "node scripts/check-node.mjs",
+    "prebuild": "node scripts/check-node.mjs",
+    "prestart": "node scripts/check-node.mjs",
+    "dev": "node scripts/dev-single.mjs",
+    "build": "node ./node_modules/nuxt/bin/nuxt.mjs build",
+    "start": "node .output/server/index.mjs",
+    "preview:local": "node ./node_modules/nuxt/bin/nuxt.mjs start --host 127.0.0.1 --port 3100"
+  },
+  "dependencies": {
+    "@element-plus/nuxt": "^1.1.5",
+    "@fontsource/poppins": "^5.2.7",
+    "@nuxt/image": "^2.0.0",
+    "@pinia/nuxt": "^0.11.3",
+    "axios": "^1.12.2",
+    "element-plus": "^2.11.4",
+    "nuxt": "^4.4.2",
+    "pinia": "^3.0.3",
+    "vue": "^3.5.31"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.2",
+    "typescript": "^5.9.3",
+    "vue-tsc": "^3.2.4"
+  },
+  "overrides": {
+    "ofetch": "^1.5.1"
+  }
+}

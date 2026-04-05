@@ -1,0 +1,13 @@
+#!/bin/bash
+# DNS.NF 前端启动脚本
+# 监听端口 3000
+
+export NUXT_PUBLIC_API_BASE=https://api.dns.nf
+export NUXT_API_INTERNAL_BASE=http://127.0.0.1:8080
+export NUXT_INTERNAL_TOKEN=${NUXT_INTERNAL_TOKEN:-}
+export NUXT_API_ADMIN_KEY=${NUXT_API_ADMIN_KEY:-}
+export NUXT_API_PUBLIC_PER_MINUTE=${NUXT_API_PUBLIC_PER_MINUTE:-30}
+export NUXT_API_TOKEN_PER_MINUTE=${NUXT_API_TOKEN_PER_MINUTE:-300}
+
+cd /opt/dnsnf
+node server/index.mjs

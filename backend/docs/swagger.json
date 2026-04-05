@@ -1,0 +1,726 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "DNS.NF API",
+    "description": "DNS lookup and reverse DNS intelligence API",
+    "version": "1.0.0",
+    "contact": {
+      "name": "DNS.NF Support",
+      "url": "https://dns.nf"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://api.dns.nf",
+      "description": "Production server"
+    },
+    {
+      "url": "http://localhost:8080",
+      "description": "Development server"
+    }
+  ],
+  "paths": {
+    "/health": {
+      "get": {
+        "summary": "Health check",
+        "description": "Check if the API is healthy",
+        "tags": ["Health"],
+        "responses": {
+          "200": {
+            "description": "Service is healthy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/dns": {
+      "get": {
+        "summary": "DNS Lookup",
+        "description": "Query DNS records for a domain or IP address",
+        "tags": ["DNS"],
+        "parameters": [
+          {
+            "name": "domain",
+            "in": "query",
+            "description": "Domain name to query (e.g., example.com)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ip",
+            "in": "query",
+            "description": "IP address to query (e.g., 8.8.8.8)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "description": "DNS record type to query",
+            "schema": {
+              "type": "string",
+              "enum": ["ALL", "A", "AAAA", "CNAME", "MX", "NS", "TXT", "CAA", "SOA", "SRV", "RDNS"],
+              "default": "ALL"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful DNS query",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DNSResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - missing or invalid parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/rdns-search": {
+      "get": {
+        "summary": "Reverse DNS Search",
+        "description": "Search rDNS records by PTR pattern",
+        "tags": ["Reverse DNS"],
+        "parameters": [
+          {
+            "name": "keyword",
+            "in": "query",
+            "required": true,
+            "description": "Search keyword (min 2 characters)",
+            "schema": {
+              "type": "string",
+              "minLength": 2
+            }
+          },
+          {
+            "name": "mode",
+            "in": "query",
+            "description": "Search mode",
+            "schema": {
+              "type": "string",
+              "enum": ["left", "middle", "right"],
+              "default": "middle"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Maximum number of results (1-1000)",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1000,
+              "default": 200
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful search",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RDNSSearchResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/rdns-records": {
+      "post": {
+        "summary": "Bulk Upsert rDNS Records",
+        "description": "Insert or update multiple rDNS records (requires internal token)",
+        "tags": ["Reverse DNS"],
+        "security": [
+          {
+            "InternalToken": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/RDNSRecordInput"
+                },
+                "maxItems": 5000
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Records upserted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpsertResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - invalid or missing internal token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/dns-history": {
+      "get": {
+        "summary": "Get DNS History",
+        "description": "Retrieve historical DNS records for a domain",
+        "tags": ["DNS History"],
+        "parameters": [
+          {
+            "name": "domain",
+            "in": "query",
+            "required": true,
+            "description": "Domain name to query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Maximum number of records (1-2000)",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 2000,
+              "default": 500
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful query",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DNSHistoryResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Upsert DNS History",
+        "description": "Insert or update DNS history records (requires internal token)",
+        "tags": ["DNS History"],
+        "security": [
+          {
+            "InternalToken": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/DNSHistoryRecord"
+                },
+                "maxItems": 5000
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Records upserted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpsertResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/metrics": {
+      "get": {
+        "summary": "Prometheus Metrics",
+        "description": "Get Prometheus metrics for monitoring",
+        "tags": ["Monitoring"],
+        "responses": {
+          "200": {
+            "description": "Prometheus metrics in text format",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "HealthResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "example": "ok"
+          },
+          "timestamp": {
+            "type": "integer",
+            "format": "int64",
+            "example": 1704067200
+          }
+        }
+      },
+      "DNSResponse": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "integer",
+            "example": 0
+          },
+          "data": {
+            "$ref": "#/components/schemas/DNSData"
+          },
+          "cached": {
+            "type": "boolean",
+            "example": false
+          },
+          "timestamp": {
+            "type": "integer",
+            "format": "int64",
+            "example": 1704067200
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "DNSData": {
+        "type": "object",
+        "properties": {
+          "domain": {
+            "type": "string",
+            "example": "example.com"
+          },
+          "ip": {
+            "type": "string",
+            "example": "8.8.8.8"
+          },
+          "reverse_dns": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "example": ["dns.google"]
+          },
+          "records": {
+            "$ref": "#/components/schemas/DNSRecords"
+          }
+        }
+      },
+      "DNSRecords": {
+        "type": "object",
+        "properties": {
+          "A": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "example": ["93.184.216.34"]
+          },
+          "AAAA": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "CNAME": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "MX": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MXRecord"
+            }
+          },
+          "NS": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "TXT": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "CAA": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CAARecord"
+            }
+          },
+          "SOA": {
+            "$ref": "#/components/schemas/SOARecord"
+          },
+          "SRV": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SRVRecord"
+            }
+          }
+        }
+      },
+      "MXRecord": {
+        "type": "object",
+        "properties": {
+          "host": {
+            "type": "string",
+            "example": "mail.example.com"
+          },
+          "pref": {
+            "type": "integer",
+            "example": 10
+          }
+        }
+      },
+      "CAARecord": {
+        "type": "object",
+        "properties": {
+          "flag": {
+            "type": "integer",
+            "example": 0
+          },
+          "tag": {
+            "type": "string",
+            "example": "issue"
+          },
+          "value": {
+            "type": "string",
+            "example": "letsencrypt.org"
+          }
+        }
+      },
+      "SOARecord": {
+        "type": "object",
+        "properties": {
+          "ns": {
+            "type": "string",
+            "example": "ns1.example.com"
+          },
+          "mbox": {
+            "type": "string",
+            "example": "admin.example.com"
+          },
+          "serial": {
+            "type": "integer",
+            "example": 2024010101
+          },
+          "refresh": {
+            "type": "integer",
+            "example": 3600
+          },
+          "retry": {
+            "type": "integer",
+            "example": 600
+          },
+          "expire": {
+            "type": "integer",
+            "example": 86400
+          },
+          "minttl": {
+            "type": "integer",
+            "example": 300
+          }
+        }
+      },
+      "SRVRecord": {
+        "type": "object",
+        "properties": {
+          "target": {
+            "type": "string",
+            "example": "sip.example.com"
+          },
+          "port": {
+            "type": "integer",
+            "example": 5060
+          },
+          "priority": {
+            "type": "integer",
+            "example": 10
+          },
+          "weight": {
+            "type": "integer",
+            "example": 5
+          }
+        }
+      },
+      "RDNSSearchResponse": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "integer",
+            "example": 0
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "keyword": {
+                "type": "string"
+              },
+              "mode": {
+                "type": "string"
+              },
+              "total": {
+                "type": "integer"
+              },
+              "records": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/RDNSRecord"
+                }
+              }
+            }
+          },
+          "timestamp": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "RDNSRecord": {
+        "type": "object",
+        "properties": {
+          "ip": {
+            "type": "string",
+            "example": "192.168.1.1"
+          },
+          "ptr": {
+            "type": "string",
+            "example": "host1.example.com"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "RDNSRecordInput": {
+        "type": "object",
+        "properties": {
+          "ip": {
+            "type": "string",
+            "example": "192.168.1.1"
+          },
+          "ptr": {
+            "type": "string",
+            "example": "host1.example.com"
+          }
+        },
+        "required": ["ip", "ptr"]
+      },
+      "DNSHistoryResponse": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "integer",
+            "example": 0
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "domain": {
+                "type": "string"
+              },
+              "total": {
+                "type": "integer"
+              },
+              "records": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/DNSHistoryRecord"
+                }
+              }
+            }
+          },
+          "timestamp": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "DNSHistoryRecord": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "domain": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "value": {
+            "type": "string"
+          },
+          "source": {
+            "type": "string"
+          },
+          "first_seen": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "last_seen": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "UpsertResponse": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "integer",
+            "example": 0
+          },
+          "inserted": {
+            "type": "integer",
+            "example": 100
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "integer",
+            "example": 400
+          },
+          "message": {
+            "type": "string",
+            "example": "domain or ip is required"
+          },
+          "timestamp": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "InternalToken": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-Internal-Token",
+        "description": "Internal API token for administrative operations"
+      }
+    }
+  }
+}
