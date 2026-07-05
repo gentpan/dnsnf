@@ -10,12 +10,8 @@ export default defineNuxtConfig({
   modules: ['@pinia/nuxt', '@element-plus/nuxt', '@nuxt/image'],
   css: ['~/assets/css/main.css'],
   runtimeConfig: {
-    rdnsInternalToken: process.env.NUXT_RDNS_INTERNAL_TOKEN || '',
     apiAdminKey: process.env.NUXT_API_ADMIN_KEY || process.env.API_ADMIN_KEY || '',
     apiPublicPerMinute: Number(process.env.NUXT_API_PUBLIC_PER_MINUTE || process.env.API_PUBLIC_PER_MINUTE || 30),
-    apiTokenDefaultPerMinute: Number(
-      process.env.NUXT_API_TOKEN_PER_MINUTE || process.env.API_TOKEN_PER_MINUTE || 300,
-    ),
     // Server-to-server URL for Go backend (use internal Docker hostname in production)
     apiInternalBase: process.env.NUXT_API_INTERNAL_BASE || process.env.NUXT_PUBLIC_API_BASE || 'http://localhost:8080',
     // Shared secret for internal Nuxt → Go backend calls (must match INTERNAL_TOKEN on Go backend)
@@ -55,7 +51,7 @@ export default defineNuxtConfig({
         },
         {
           rel: 'stylesheet',
-          href: 'https://icons.bluecdn.com/fontawesome-pro/css/all.min.css',
+          href: 'https://static.bluecdn.com/libs/fontawesome/7.3.0/css/all.min.css',
         },
       ],
     },
