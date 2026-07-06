@@ -15,6 +15,7 @@ import {
 } from 'lucide-react'
 import { Select } from '@/components/base-select'
 import { Tabs } from '@/components/base-tabs'
+import { PageHero } from '@/components/page-hero'
 import { Badge, Button, Card, CardContent, CardHeader, Input, StatusBadge } from '@/components/ui'
 import { seoMeta } from '@/lib/seo'
 
@@ -322,17 +323,15 @@ function PublicApiPage() {
 
   return (
     <div className="space-y-6">
-      <section className="overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-sm shadow-zinc-200/40">
-        <div className="bg-zinc-950 p-6 text-white">
-          <div className="flex flex-wrap items-center gap-2">
-            <StatusBadge tone="green">Public API</StatusBadge>
-            <span className="inline-flex items-center rounded-md border border-white/15 bg-white/10 px-2 py-1 text-xs font-medium text-zinc-100">v1</span>
-          </div>
-          <h1 className="mt-5 text-3xl font-semibold tracking-normal">DNS.NF Public API</h1>
-          <p className="mt-3 max-w-3xl text-sm leading-6 text-zinc-300">
-            Query DNS records, reverse IP relationships, subdomains, rDNS records, DNS history, and DNSSEC data from {API_BASE}.
-          </p>
-          <div className="mt-5 grid gap-2 sm:grid-cols-2">
+      <PageHero
+        variant="dark"
+        eyebrow="Public API"
+        title="DNS.NF Public API"
+        badge="v1"
+        badgeTone="green"
+        body={<>Query DNS records, reverse IP relationships, subdomains, rDNS records, DNS history, and DNSSEC data from {API_BASE}.</>}
+        actions={
+          <>
             <Button variant="secondary" size="sm" className="h-10 justify-center" onClick={() => copyText(markdownFor(endpoint, fullUrl, codeExamples.curl))}>
               <Clipboard className="h-4 w-4" />
               Copy Markdown
@@ -341,15 +340,18 @@ function PublicApiPage() {
               <ExternalLink className="h-4 w-4" />
               Open Request
             </Button>
-          </div>
-        </div>
-        <div className="divide-y divide-zinc-100">
-          <ApiFact icon={Globe2} title="Base URL" value={API_BASE} />
-          <ApiFact icon={KeyRound} title="Authentication" value="No API key required" />
-          <ApiFact icon={Timer} title="Rate Limit" value="60 requests / minute / client IP" />
-          <ApiFact icon={ShieldCheck} title="Transport" value="HTTPS JSON" />
-        </div>
-      </section>
+          </>
+        }
+        meta={
+          <>
+            <ApiFact icon={Globe2} title="Base URL" value={API_BASE} />
+            <ApiFact icon={KeyRound} title="Authentication" value="No API key required" />
+            <ApiFact icon={Timer} title="Rate Limit" value="60 requests / minute / client IP" />
+            <ApiFact icon={ShieldCheck} title="Transport" value="HTTPS JSON" />
+          </>
+        }
+        metaClassName="grid divide-y-0 sm:grid-cols-2 lg:grid-cols-4"
+      />
 
       <Card>
         <CardHeader className="space-y-4 bg-zinc-50/70">

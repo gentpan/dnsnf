@@ -5,6 +5,7 @@ import { ChevronLeft, ChevronRight, House, LockKeyhole, Search, XCircle } from '
 import { api, type DnsRecordType, type DnsResolver } from '@/lib/api'
 import { getRelatedArticles, type BlogArticle } from '@/lib/blog'
 import { Select } from './base-select'
+import { PageHero } from './page-hero'
 import { Badge, Button, Card, CardContent, CardHeader, EmptyState, Input, StatusBadge } from './ui'
 
 const recordTypes: DnsRecordType[] = ['ALL', 'A', 'AAAA', 'CNAME', 'MX', 'NS', 'TXT', 'CAA', 'SOA', 'SRV', 'PTR']
@@ -38,18 +39,7 @@ export function PageTitle({
   badgeTone?: 'zinc' | 'green' | 'blue' | 'amber' | 'red'
 }) {
   return (
-    <div className="mb-5 flex flex-col gap-4 border-b border-zinc-200 pb-5 sm:flex-row sm:items-end sm:justify-between">
-      <div className="min-w-0">
-        <div className="mb-2 text-xs font-medium uppercase text-zinc-500">{eyebrow}</div>
-        <h1 className="text-2xl font-semibold tracking-normal text-zinc-950">{title}</h1>
-        <p className="mt-2 max-w-3xl text-sm leading-6 text-zinc-600">{body}</p>
-      </div>
-      {badge ? (
-        <StatusBadge tone={badgeTone} className="w-fit shrink-0 whitespace-nowrap">
-          {badge}
-        </StatusBadge>
-      ) : null}
-    </div>
+    <PageHero eyebrow={eyebrow} title={title} body={body} badge={badge} badgeTone={badgeTone} />
   )
 }
 

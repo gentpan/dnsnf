@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { BookOpen } from 'lucide-react'
+import { PageHero } from '@/components/page-hero'
 import { Badge, Card, CardContent, CardHeader } from '@/components/ui'
 import { blogArticles } from '@/lib/blog'
 
@@ -10,16 +11,12 @@ export const Route = createFileRoute('/blog/')({
 function BlogIndex() {
   return (
     <div className="space-y-6">
-      <div className="mb-5 flex flex-col gap-3 border-b border-zinc-200 pb-5 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <div className="mb-2 text-xs font-medium uppercase text-zinc-500">DNS.NF blog</div>
-          <h1 className="text-2xl font-semibold tracking-normal text-zinc-950">DNS Guides</h1>
-          <p className="mt-2 max-w-3xl text-sm leading-6 text-zinc-600">
-            Practical notes for understanding DNS records, reverse discovery, mail infrastructure, and DNSSEC posture.
-          </p>
-        </div>
-        <Badge>Guides</Badge>
-      </div>
+      <PageHero
+        eyebrow="DNS.NF blog"
+        title="DNS Guides"
+        body="Practical notes for understanding DNS records, reverse discovery, mail infrastructure, and DNSSEC posture."
+        badge="Guides"
+      />
 
       <div className="grid gap-4">
         {blogArticles.map((article) => (

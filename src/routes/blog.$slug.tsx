@@ -1,5 +1,6 @@
 import { createFileRoute, Link, notFound } from '@tanstack/react-router'
 import { ArrowLeft } from 'lucide-react'
+import { PageHero } from '@/components/page-hero'
 import { Badge, Card, CardContent, CardHeader } from '@/components/ui'
 import { blogArticles, getBlogArticle, getRelatedArticles } from '@/lib/blog'
 import { seoMeta } from '@/lib/seo'
@@ -29,21 +30,25 @@ function BlogArticlePage() {
 
   return (
     <article className="space-y-6">
-      <Link to="/blog" className="inline-flex items-center gap-2 text-sm font-medium text-zinc-500 transition hover:text-zinc-950">
-        <ArrowLeft className="h-4 w-4" />
-        Blog
-      </Link>
-
-      <header className="border-b border-zinc-200 pb-5">
-        <div className="mb-3 flex flex-wrap gap-2">
-          <Badge>{article.readTime}</Badge>
-          {article.keywords.slice(0, 3).map((keyword) => (
-            <Badge key={keyword}>{keyword}</Badge>
-          ))}
-        </div>
-        <h1 className="text-3xl font-semibold tracking-normal text-zinc-950">{article.title}</h1>
-        <p className="mt-3 max-w-3xl text-sm leading-6 text-zinc-600">{article.description}</p>
-      </header>
+      <PageHero
+        eyebrow="DNS.NF guide"
+        title={article.title}
+        body={article.description}
+        badge={article.readTime}
+        actions={
+          <Link to="/blog" className="inline-flex h-10 items-center justify-center gap-2 rounded-md border border-zinc-200 bg-white px-4 text-sm font-medium text-zinc-600 transition hover:bg-zinc-50 hover:text-zinc-950 sm:w-fit">
+            <ArrowLeft className="h-4 w-4" />
+            Blog
+          </Link>
+        }
+        meta={
+          <div className="flex flex-wrap gap-2 p-5">
+            {article.keywords.slice(0, 5).map((keyword) => (
+              <Badge key={keyword}>{keyword}</Badge>
+            ))}
+          </div>
+        }
+      />
 
       <div className="space-y-4">
         {article.sections.map((section) => (
