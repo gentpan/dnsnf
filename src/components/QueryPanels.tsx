@@ -155,7 +155,6 @@ export function LookupPanel({ initialTarget = '' }: { initialTarget?: string }) 
               <ResolverButton
                 key={option.value}
                 label={option.label}
-                detail={option.detail}
                 icon={option.icon}
                 logoSrc={option.logoSrc}
                 selected={resolver === option.value}
@@ -195,14 +194,12 @@ export function LookupPanel({ initialTarget = '' }: { initialTarget?: string }) 
 
 function ResolverButton({
   label,
-  detail,
   icon: Icon,
   logoSrc,
   selected,
   onClick,
 }: {
   label: string
-  detail: string
   icon?: React.ComponentType<{ className?: string }>
   logoSrc?: string
   selected: boolean
@@ -213,7 +210,7 @@ function ResolverButton({
       type="button"
       onClick={onClick}
       className={[
-        'inline-flex min-h-14 items-center justify-start gap-2 rounded-md px-2.5 py-2 text-left transition sm:px-3',
+        'inline-flex h-14 items-center justify-center gap-2 rounded-md px-2.5 py-2 text-center transition sm:px-3',
         selected
           ? 'bg-zinc-950 text-white shadow-sm'
           : 'text-zinc-500 hover:bg-zinc-50 hover:text-zinc-950',
@@ -226,12 +223,7 @@ function ResolverButton({
       ) : Icon ? (
         <Icon className="h-4 w-4 shrink-0" />
       ) : null}
-      <span className="min-w-0">
-        <span className="block truncate text-xs font-semibold">{label}</span>
-        <span className={['mt-0.5 block truncate font-mono text-[10px]', selected ? 'text-zinc-300' : 'text-zinc-400'].join(' ')}>
-          {detail}
-        </span>
-      </span>
+      <span className="min-w-0 truncate text-sm font-semibold">{label}</span>
     </button>
   )
 }
