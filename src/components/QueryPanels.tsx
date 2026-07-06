@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
-import { Building2, ChevronLeft, ChevronRight, Cloud, House, Loader2, LockKeyhole, Search, ShieldCheck, XCircle } from 'lucide-react'
+import { Building2, ChevronLeft, ChevronRight, Cloud, House, Loader2, LockKeyhole, Search, XCircle } from 'lucide-react'
 import { api, type DnsRecordType, type DnsResolver } from '@/lib/api'
 import { getRelatedArticles, type BlogArticle } from '@/lib/blog'
 import { Select } from './base-select'
@@ -16,7 +16,6 @@ const resolverOptions: Array<{ value: DnsResolver; label: string; icon: React.Co
   { value: 'google', label: 'Google', icon: GoogleIcon },
   { value: 'ali', label: 'Ali', icon: Building2 },
   { value: 'tencent', label: '腾讯', icon: TencentIcon },
-  { value: 'authoritative', label: 'Auth', icon: ShieldCheck },
 ]
 const rdnsModeOptions = [
   { value: 'middle', label: 'Contains' },
@@ -121,7 +120,7 @@ export function LookupPanel({ initialTarget = '' }: { initialTarget?: string }) 
             Query target
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <div className="grid w-full grid-cols-2 gap-1 rounded-lg border border-zinc-200 bg-white p-1 shadow-sm shadow-zinc-200/40 sm:w-auto sm:grid-cols-3 lg:grid-cols-6">
+            <div className="grid w-full grid-cols-2 gap-1 rounded-lg border border-zinc-200 bg-white p-1 shadow-sm shadow-zinc-200/40 sm:w-auto sm:grid-cols-3 lg:grid-cols-5">
               {resolverOptions.map((option) => (
                 <ResolverButton
                   key={option.value}
