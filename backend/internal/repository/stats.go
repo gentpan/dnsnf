@@ -21,3 +21,14 @@ func (p *PostgresRepository) GetStatsOverview(ctx context.Context) (models.Stats
 	`).Scan(&out.TodayRequests, &out.TotalQueries, &out.TodayVisitors)
 	return out, err
 }
+
+func (p *PostgresRepository) GetTrafficStatsStartedAt(ctx context.Context) (time.Time, error) {
+	var startedAt time.Time
+	err := p.pool.QueryRow(ctx, `
+		INSERT INTO traffic_stats_baseline (key)
+		VALUES ('cloudflare_requests_total')
+		ON CONFLICT (key) DO UPDATE SET key = EXCLUDED.key
+		RETURNING started_at
+	`).Scan(&startedAt)
+	return startedAt, err
+}

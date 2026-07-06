@@ -27,6 +27,10 @@ type Config struct {
 	CORSOrigins   []string
 	InternalToken string
 	AnalyticsURL  string
+
+	CloudflareEmail  string
+	CloudflareAPIKey string
+	CloudflareZoneID string
 }
 
 func Load() (*Config, error) {
@@ -54,6 +58,10 @@ func Load() (*Config, error) {
 		CORSOrigins:   splitCSV(getenv("CORS_ALLOWED_ORIGINS", "https://dns.nf,http://localhost:3000")),
 		InternalToken: getenv("INTERNAL_TOKEN", ""),
 		AnalyticsURL:  getenv("ANALYTICS_URL", ""),
+
+		CloudflareEmail:  getenv("CLOUDFLARE_EMAIL", ""),
+		CloudflareAPIKey: getenv("CLOUDFLARE_API_KEY", ""),
+		CloudflareZoneID: getenv("CLOUDFLARE_ZONE_ID", ""),
 	}
 
 	return cfg, nil

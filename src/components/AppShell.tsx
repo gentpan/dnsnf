@@ -15,7 +15,7 @@ import {
   ShieldCheck,
 } from 'lucide-react'
 import { Badge, Button, Card, CardContent, StatusBadge } from './ui'
-import { api, getClientRequestStats, subscribeClientRequestStats, type ClientRequestStats } from '@/lib/api'
+import { api, type TrafficRange } from '@/lib/api'
 
 const LazyHelpDialogTrigger = React.lazy(() =>
   import('./HelpDialogTrigger').then((module) => ({ default: module.HelpDialogTrigger })),
@@ -40,18 +40,27 @@ const socialLinks = [
   { href: 'https://x.com/gentpan', label: 'X', icon: XIcon },
 ]
 
+const trafficRanges: Array<{ value: TrafficRange; label: string }> = [
+  { value: '24h', label: '24h' },
+  { value: '7d', label: '7d' },
+  { value: '30d', label: '30d' },
+  { value: 'total', label: 'Total' },
+]
+
 export function AppShell() {
-  const [requestStats, setRequestStats] = React.useState<ClientRequestStats>(() => ({
-    today: 0,
-    total: 0,
-    session: 0,
-    day: new Date().toISOString().slice(0, 10),
-  }))
+  const [trafficRange, setTrafficRange] = React.useState<TrafficRange>('24h')
   const health = useQuery({
     queryKey: ['api-health'],
     queryFn: measureApiHealth,
     refetchInterval: 30_000,
     staleTime: 15_000,
+    retry: 1,
+  })
+  const traffic = useQuery({
+    queryKey: ['traffic-stats', trafficRange],
+    queryFn: () => api.trafficStats(trafficRange),
+    refetchInterval: 300_000,
+    staleTime: 240_000,
     retry: 1,
   })
   const healthPayload = health.data?.payload
@@ -65,11 +74,6 @@ export function AppShell() {
       : health.isLoading
         ? 'Checking local network latency to api.dns.nf.'
         : 'api.dns.nf health check failed.'
-
-  React.useEffect(() => {
-    setRequestStats(getClientRequestStats())
-    return subscribeClientRequestStats(() => setRequestStats(getClientRequestStats()))
-  }, [])
 
   return (
     <div className="app-bg flex min-h-screen flex-col text-zinc-950">
@@ -139,10 +143,34 @@ export function AppShell() {
                 <Braces className="h-4 w-4 text-sky-600" />
                 Requests
               </div>
+              <div className="grid grid-cols-4 gap-1 rounded-lg bg-zinc-100 p-1">
+                {trafficRanges.map((item) => (
+                  <button
+                    key={item.value}
+                    type="button"
+                    onClick={() => setTrafficRange(item.value)}
+                    className={[
+                      'rounded-md px-1.5 py-1.5 text-[11px] font-medium transition',
+                      trafficRange === item.value
+                        ? 'bg-white text-zinc-950 shadow-sm'
+                        : 'text-zinc-500 hover:text-zinc-950',
+                    ].join(' ')}
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </div>
               <div className="grid gap-2">
-                <MetricRow label="Today" value={requestStats.today} />
-                <MetricRow label="Session" value={requestStats.session} />
-                <MetricRow label="Total" value={requestStats.total} />
+                {traffic.isError ? (
+                  <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700">
+                    Stats unavailable
+                  </div>
+                ) : (
+                  <>
+                    {trafficRange !== 'total' ? <MetricRow label="Visitors" value={traffic.data?.data.visitors} /> : null}
+                    <MetricRow label="Requests" value={traffic.data?.data.requests} loading={traffic.isLoading} />
+                  </>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -289,11 +317,13 @@ function XIcon({ className }: { className?: string }) {
   )
 }
 
-function MetricRow({ label, value }: { label: string; value: number }) {
+function MetricRow({ label, value, loading = false }: { label: string; value?: number; loading?: boolean }) {
   return (
     <div className="flex items-center justify-between rounded-md border border-zinc-200 bg-zinc-50 px-3 py-2">
       <span className="text-xs text-zinc-500">{label}</span>
-      <span className="font-mono text-sm font-semibold text-zinc-950">{value.toLocaleString()}</span>
+      <span className="font-mono text-sm font-semibold text-zinc-950">
+        {loading || value === undefined ? '-' : value.toLocaleString()}
+      </span>
     </div>
   )
 }

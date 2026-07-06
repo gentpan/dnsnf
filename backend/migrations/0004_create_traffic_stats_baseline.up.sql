@@ -1,0 +1,4 @@
+CREATE TABLE IF NOT EXISTS traffic_stats_baseline (
+  key TEXT PRIMARY KEY,
+  started_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);

@@ -9,3 +9,10 @@ type StatsOverview struct {
 	TodayVisitors int64     `json:"today_visitors"`
 	UpdatedAt     time.Time `json:"updated_at"`
 }
+
+type TrafficStats struct {
+	Range     string    `json:"range"`
+	Requests  int64     `json:"requests"`
+	Visitors  int64     `json:"visitors"`
+	UpdatedAt time.Time `json:"updated_at"`
+}

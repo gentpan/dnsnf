@@ -60,6 +60,12 @@ func main() {
 	historyHandler := handlers.NewDnsHistoryHandler(pgRepo, cfg.InternalToken)
 	rdnsHandler := handlers.NewRdnsRecordHandler(pgRepo, cfg.InternalToken)
 	discoveryHandler := handlers.NewDiscoveryHandler(redisStore, pgRepo, cfg.DNSUpstream)
+	trafficService := services.NewCloudflareAnalyticsService(services.CloudflareAnalyticsConfig{
+		Email:  cfg.CloudflareEmail,
+		APIKey: cfg.CloudflareAPIKey,
+		ZoneID: cfg.CloudflareZoneID,
+	}, redisStore, pgRepo)
+	trafficHandler := handlers.NewTrafficHandler(trafficService)
 
 	loggerMW := middleware.NewRequestLogger(logger)
 	// V1: public API, 60 requests per minute.
@@ -70,7 +76,7 @@ func main() {
 	corsMW := middleware.NewCORS(cfg.CORSOrigins)
 	metricsMW := middleware.NewMetrics()
 	analyticsReporter := middleware.NewAnalyticsReporter(cfg.AnalyticsURL, cfg.InternalToken)
-	router := handlers.NewRouter(dnsHandler, historyHandler, rdnsHandler, discoveryHandler, loggerMW, v1Limiter, recoveryMW, corsMW, metricsMW, v2TokenAuth, analyticsReporter)
+	router := handlers.NewRouter(dnsHandler, historyHandler, rdnsHandler, discoveryHandler, trafficHandler, loggerMW, v1Limiter, recoveryMW, corsMW, metricsMW, v2TokenAuth, analyticsReporter)
 
 	server := &http.Server{
 		Addr:         ":" + cfg.Port,

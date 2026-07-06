@@ -70,6 +70,15 @@ export type StatsOverview = {
   updated_at: string
 }
 
+export type TrafficRange = '24h' | '7d' | '30d' | 'total'
+
+export type TrafficStats = {
+  range: TrafficRange
+  requests: number
+  visitors: number
+  updated_at: string
+}
+
 export type HealthStatus = {
   status?: string
   timestamp?: number
@@ -108,6 +117,7 @@ function browserOrigin() {
 export const api = {
   health: () => requestRaw<HealthStatus>('/health'),
   stats: () => request<StatsOverview>('/v1/dns/stats/overview'),
+  trafficStats: (range: TrafficRange) => request<TrafficStats>('/v1/dns/stats/traffic', { range }),
   lookup: (target: string, type: DnsRecordType, resolver: DnsResolver = 'cloudflare') => {
     const isIp = target.includes(':') || /^(\d{1,3}\.){3}\d{1,3}(?:\/\d{1,2})?$/.test(target)
     return request<DnsLookupData>(
