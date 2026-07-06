@@ -32,22 +32,30 @@ export function Select({
         </BaseSelect.Icon>
       </BaseSelect.Trigger>
       <BaseSelect.Portal>
-        <BaseSelect.Positioner sideOffset={6} alignItemWithTrigger={false}>
-          <BaseSelect.Popup className="z-50 max-h-72 min-w-[var(--anchor-width)] overflow-hidden rounded-md border border-zinc-200 bg-white p-1 shadow-lg shadow-zinc-900/10 outline-none">
+        <BaseSelect.Positioner
+          positionMethod="fixed"
+          sideOffset={6}
+          align="start"
+          alignItemWithTrigger={false}
+          collisionPadding={12}
+          collisionAvoidance={{ side: 'flip', align: 'shift', fallbackAxisSide: 'none' }}
+          className="z-[1000]"
+        >
+          <BaseSelect.Popup className="w-max max-h-[min(18rem,var(--available-height))] min-w-[var(--anchor-width)] max-w-[min(28rem,calc(100vw-1.5rem))] overflow-hidden rounded-md border border-zinc-200 bg-white p-1 shadow-lg shadow-zinc-900/10 outline-none">
             <BaseSelect.ScrollUpArrow className="flex h-6 items-center justify-center text-zinc-400">
               <ChevronsUpDown className="h-3.5 w-3.5" />
             </BaseSelect.ScrollUpArrow>
-            <BaseSelect.List className="max-h-64 overflow-auto">
+            <BaseSelect.List className="max-h-[min(16rem,var(--available-height))] overflow-y-auto overscroll-contain">
               {options.map((option) => (
                 <BaseSelect.Item
                   key={option.value}
                   value={option.value}
-                  className="grid cursor-default grid-cols-[18px_1fr] items-center gap-2 rounded px-2 py-2 text-sm outline-none data-[highlighted]:bg-zinc-100 data-[selected]:font-medium"
+                  className="grid min-w-0 cursor-default grid-cols-[18px_minmax(0,1fr)] items-center gap-2 rounded px-2 py-2 text-sm outline-none data-[highlighted]:bg-zinc-100 data-[selected]:font-medium"
                 >
                   <BaseSelect.ItemIndicator className="text-zinc-950">
                     <Check className="h-4 w-4" />
                   </BaseSelect.ItemIndicator>
-                  <BaseSelect.ItemText>{option.label}</BaseSelect.ItemText>
+                  <BaseSelect.ItemText className="min-w-0 truncate leading-5">{option.label}</BaseSelect.ItemText>
                 </BaseSelect.Item>
               ))}
             </BaseSelect.List>

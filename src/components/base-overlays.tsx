@@ -9,8 +9,14 @@ export function Tooltip({ children, content }: { children: React.ReactNode; cont
     <BaseTooltip.Root>
       <BaseTooltip.Trigger render={children as React.ReactElement} />
       <BaseTooltip.Portal>
-        <BaseTooltip.Positioner sideOffset={8}>
-          <BaseTooltip.Popup className="z-50 max-w-64 rounded-md border border-zinc-200 bg-zinc-950 px-2.5 py-1.5 text-xs leading-5 text-white shadow-lg shadow-zinc-900/20">
+        <BaseTooltip.Positioner
+          positionMethod="fixed"
+          sideOffset={8}
+          collisionPadding={12}
+          collisionAvoidance={{ side: 'flip', align: 'shift', fallbackAxisSide: 'none' }}
+          className="z-[1000]"
+        >
+          <BaseTooltip.Popup className="max-w-64 rounded-md border border-zinc-200 bg-zinc-950 px-2.5 py-1.5 text-xs leading-5 text-white shadow-lg shadow-zinc-900/20">
             <BaseTooltip.Arrow className="fill-zinc-950" />
             {content}
           </BaseTooltip.Popup>
@@ -70,8 +76,14 @@ export function InfoPopover({
     <BasePopover.Root>
       <BasePopover.Trigger render={trigger as React.ReactElement} />
       <BasePopover.Portal>
-        <BasePopover.Positioner sideOffset={8}>
-          <BasePopover.Popup className="z-50 w-72 rounded-lg border border-zinc-200 bg-white p-4 shadow-lg shadow-zinc-900/10 outline-none">
+        <BasePopover.Positioner
+          positionMethod="fixed"
+          sideOffset={8}
+          collisionPadding={12}
+          collisionAvoidance={{ side: 'flip', align: 'shift', fallbackAxisSide: 'none' }}
+          className="z-[1000]"
+        >
+          <BasePopover.Popup className="w-[min(18rem,calc(100vw-1.5rem))] rounded-lg border border-zinc-200 bg-white p-4 shadow-lg shadow-zinc-900/10 outline-none">
             <BasePopover.Arrow className="fill-white stroke-zinc-200" />
             <BasePopover.Title className="text-sm font-semibold text-zinc-950">{title}</BasePopover.Title>
             <BasePopover.Description className="mt-2 text-sm leading-6 text-zinc-600">
