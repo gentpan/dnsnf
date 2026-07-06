@@ -5,12 +5,8 @@ import {
   Code2,
   Copy,
   ExternalLink,
-  Globe2,
-  KeyRound,
   Link as LinkIcon,
   Send,
-  ShieldCheck,
-  Timer,
   X,
 } from 'lucide-react'
 import { Select } from '@/components/base-select'
@@ -327,7 +323,7 @@ function PublicApiPage() {
         variant="dark"
         eyebrow="Public API"
         title="DNS.NF Public API"
-        badge="v1"
+        badge="v1 · 60 req/min/IP"
         badgeTone="green"
         body={<>Query DNS records, reverse IP relationships, subdomains, rDNS records, DNS history, and DNSSEC data from {API_BASE}.</>}
         actions={
@@ -342,15 +338,6 @@ function PublicApiPage() {
             </Button>
           </>
         }
-        meta={
-          <>
-            <ApiFact icon={Globe2} title="Base URL" value={API_BASE} />
-            <ApiFact icon={KeyRound} title="Authentication" value="No API key required" />
-            <ApiFact icon={Timer} title="Rate Limit" value="60 requests / minute / client IP" />
-            <ApiFact icon={ShieldCheck} title="Transport" value="HTTPS JSON" />
-          </>
-        }
-        metaClassName="grid divide-y-0 sm:grid-cols-2 lg:grid-cols-4"
       />
 
       <Card>
@@ -725,18 +712,6 @@ ${curl}
 Request URL:
 ${url}
 `
-}
-
-function ApiFact({ icon: Icon, title, value }: { icon: typeof Globe2; title: string; value: string }) {
-  return (
-    <div className="p-5">
-      <div className="flex items-center gap-2 text-xs font-medium uppercase text-zinc-500">
-        <Icon className="h-4 w-4 text-sky-600" />
-        {title}
-      </div>
-      <div className="mt-2 break-words font-mono text-sm text-zinc-950">{value}</div>
-    </div>
-  )
 }
 
 function CodeBlock({ code }: { code: string }) {
