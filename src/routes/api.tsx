@@ -67,7 +67,7 @@ const endpoints: ApiEndpoint[] = [
     params: [
       { name: 'domain', type: 'string', required: true, defaultValue: 'example.com', description: 'Domain name, IPv4 address, or IPv4 CIDR target. The API also accepts ip as an alias.' },
       { name: 'type', type: 'string', defaultValue: 'ALL', description: 'Record type: ALL, A, AAAA, CNAME, MX, NS, TXT, SOA, CAA, SRV, or PTR.' },
-      { name: 'resolver', type: 'string', defaultValue: 'cloudflare', description: 'Resolver: local, cloudflare, google, ali, tencent, or authoritative.' },
+      { name: 'resolver', type: 'string', defaultValue: 'cloudflare', description: 'Resolver: local, cloudflare, google, ali, or tencent. local uses the api.dns.nf server system resolver.' },
     ],
     response: `{
   "code": 0,

@@ -11,12 +11,18 @@ import { Badge, Button, Card, CardContent, CardHeader, EmptyState, Input, Status
 const recordTypes: DnsRecordType[] = ['ALL', 'A', 'AAAA', 'CNAME', 'MX', 'NS', 'TXT', 'CAA', 'SOA', 'SRV', 'PTR']
 const displayRecordTypes = recordTypes.filter((recordType) => recordType !== 'ALL')
 const recordTypeOptions = recordTypes.map((value) => ({ value, label: value }))
-const resolverOptions: Array<{ value: DnsResolver; label: string; icon?: React.ComponentType<{ className?: string }>; logoSrc?: string }> = [
-  { value: 'local', label: '本地', icon: House },
-  { value: 'cloudflare', label: 'Cloudflare', logoSrc: '/resolver-icons/cloudflare.svg' },
-  { value: 'google', label: 'Google', logoSrc: '/resolver-icons/google.svg' },
-  { value: 'ali', label: 'Ali', logoSrc: '/resolver-icons/alibabacloud.svg' },
-  { value: 'tencent', label: '腾讯', logoSrc: '/resolver-icons/tencentcloud.svg' },
+const resolverOptions: Array<{
+  value: DnsResolver
+  label: string
+  detail: string
+  icon?: React.ComponentType<{ className?: string }>
+  logoSrc?: string
+}> = [
+  { value: 'local', label: '本地', detail: 'Server resolver', icon: House },
+  { value: 'cloudflare', label: 'Cloudflare', detail: '1.1.1.1 · 1.0.0.1', logoSrc: '/resolver-icons/cloudflare.svg' },
+  { value: 'google', label: 'Google', detail: '8.8.8.8 · 8.8.4.4', logoSrc: '/resolver-icons/google.svg' },
+  { value: 'ali', label: 'Ali', detail: '223.5.5.5 · 223.6.6.6', logoSrc: '/resolver-icons/alibabacloud.svg' },
+  { value: 'tencent', label: '腾讯', detail: '119.29.29.29 · 182.254.116.116', logoSrc: '/resolver-icons/tencentcloud.svg' },
 ]
 const rdnsModeOptions = [
   { value: 'middle', label: 'Contains' },
@@ -111,6 +117,7 @@ export function LookupPanel({ initialTarget = '' }: { initialTarget?: string }) 
   const [submitted, setSubmitted] = React.useState(initialTarget)
   const [type, setType] = React.useState<DnsRecordType>('ALL')
   const [resolver, setResolver] = React.useState<DnsResolver>('cloudflare')
+  const selectedResolver = resolverOptions.find((option) => option.value === resolver) || resolverOptions[1]!
   const query = useQuery({
     queryKey: ['lookup', submitted, type, resolver],
     queryFn: () => api.lookup(submitted, type, resolver),
@@ -126,13 +133,18 @@ export function LookupPanel({ initialTarget = '' }: { initialTarget?: string }) 
               <Search className="h-4 w-4 text-sky-600" />
               Query target
             </div>
-            <Badge>{resolverOptions.find((option) => option.value === resolver)?.label}</Badge>
+            <Badge className="hidden max-w-[min(22rem,60vw)] gap-1 truncate sm:inline-flex">
+              <span>{selectedResolver.label}</span>
+              <span className="text-zinc-400">/</span>
+              <span className="truncate font-mono">{selectedResolver.detail}</span>
+            </Badge>
           </div>
           <div className="grid grid-cols-2 gap-1 rounded-lg border border-zinc-200 bg-white p-1 shadow-sm shadow-zinc-200/40 sm:grid-cols-5">
             {resolverOptions.map((option) => (
               <ResolverButton
                 key={option.value}
                 label={option.label}
+                detail={option.detail}
                 icon={option.icon}
                 logoSrc={option.logoSrc}
                 selected={resolver === option.value}
@@ -172,12 +184,14 @@ export function LookupPanel({ initialTarget = '' }: { initialTarget?: string }) 
 
 function ResolverButton({
   label,
+  detail,
   icon: Icon,
   logoSrc,
   selected,
   onClick,
 }: {
   label: string
+  detail: string
   icon?: React.ComponentType<{ className?: string }>
   logoSrc?: string
   selected: boolean
@@ -188,7 +202,7 @@ function ResolverButton({
       type="button"
       onClick={onClick}
       className={[
-        'inline-flex h-9 items-center justify-center gap-1.5 rounded-md px-2.5 text-xs font-medium transition sm:px-3',
+        'inline-flex min-h-14 items-center justify-start gap-2 rounded-md px-2.5 py-2 text-left transition sm:px-3',
         selected
           ? 'bg-zinc-950 text-white shadow-sm'
           : 'text-zinc-500 hover:bg-zinc-50 hover:text-zinc-950',
@@ -199,9 +213,14 @@ function ResolverButton({
           <img src={logoSrc} alt="" className="max-h-[18px] max-w-[18px] object-contain" />
         </span>
       ) : Icon ? (
-        <Icon className="h-3.5 w-3.5" />
+        <Icon className="h-4 w-4 shrink-0" />
       ) : null}
-      <span>{label}</span>
+      <span className="min-w-0">
+        <span className="block truncate text-xs font-semibold">{label}</span>
+        <span className={['mt-0.5 block truncate font-mono text-[10px]', selected ? 'text-zinc-300' : 'text-zinc-400'].join(' ')}>
+          {detail}
+        </span>
+      </span>
     </button>
   )
 }
