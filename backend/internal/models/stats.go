@@ -16,3 +16,9 @@ type TrafficStats struct {
 	Visitors  int64     `json:"visitors"`
 	UpdatedAt time.Time `json:"updated_at"`
 }
+
+type TrafficStatsCursor struct {
+	StartedAt     time.Time
+	LastCheckedAt time.Time
+	TotalRequests int64
+}

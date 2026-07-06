@@ -13,7 +13,8 @@ import (
 )
 
 type TrafficBaselineStore interface {
-	GetTrafficStatsStartedAt(ctx context.Context) (time.Time, error)
+	GetTrafficStatsCursor(ctx context.Context) (models.TrafficStatsCursor, error)
+	UpdateTrafficStatsCursor(ctx context.Context, checkedAt time.Time, totalRequests int64) error
 }
 
 type TrafficCache interface {
@@ -90,14 +91,72 @@ func (s *CloudflareAnalyticsService) fetchTrafficStats(ctx context.Context, traf
 	if s.baseline == nil {
 		return models.TrafficStats{}, errors.New("traffic baseline store is not configured")
 	}
-	startedAt, err := s.baseline.GetTrafficStatsStartedAt(ctx)
+	cursor, err := s.baseline.GetTrafficStatsCursor(ctx)
 	if err != nil {
 		return models.TrafficStats{}, fmt.Errorf("get traffic baseline: %w", err)
 	}
-	if startedAt.After(now) {
-		startedAt = now
+	if cursor.LastCheckedAt.After(now) {
+		cursor.LastCheckedAt = now
 	}
-	return s.queryDaily(ctx, trafficRange, startedAt, now, false)
+	delta, err := s.queryAdaptiveRequests(ctx, cursor.LastCheckedAt, now)
+	if err != nil {
+		return models.TrafficStats{}, err
+	}
+	total := cursor.TotalRequests + delta
+	if err := s.baseline.UpdateTrafficStatsCursor(ctx, now, total); err != nil {
+		return models.TrafficStats{}, fmt.Errorf("update traffic baseline: %w", err)
+	}
+	return models.TrafficStats{
+		Range:     trafficRange,
+		Requests:  total,
+		UpdatedAt: now,
+	}, nil
+}
+
+func (s *CloudflareAnalyticsService) queryAdaptiveRequests(ctx context.Context, since time.Time, now time.Time) (int64, error) {
+	if !since.Before(now) {
+		return 0, nil
+	}
+	const maxWindow = 23*time.Hour + 55*time.Minute
+	var total int64
+	windowStart := since
+	for windowStart.Before(now) {
+		windowEnd := windowStart.Add(maxWindow)
+		if windowEnd.After(now) {
+			windowEnd = now
+		}
+		count, err := s.queryAdaptiveWindow(ctx, windowStart, windowEnd)
+		if err != nil {
+			return 0, err
+		}
+		total += count
+		windowStart = windowEnd
+	}
+	return total, nil
+}
+
+func (s *CloudflareAnalyticsService) queryAdaptiveWindow(ctx context.Context, since time.Time, until time.Time) (int64, error) {
+	const query = `query($zoneTag: string!, $since: Time!, $until: Time!) {
+  viewer {
+    zones(filter: {zoneTag: $zoneTag}) {
+      httpRequestsAdaptiveGroups(limit: 1, filter: {datetime_geq: $since, datetime_leq: $until}) {
+        count
+      }
+    }
+  }
+}`
+	var out trafficGraphQLResponse
+	if err := s.graphql(ctx, query, map[string]any{
+		"zoneTag": s.cfg.ZoneID,
+		"since":   since.Format(time.RFC3339),
+		"until":   until.Format(time.RFC3339),
+	}, &out); err != nil {
+		return 0, err
+	}
+	if len(out.Viewer.Zones) == 0 || len(out.Viewer.Zones[0].HTTPRequestsAdaptiveGroups) == 0 {
+		return 0, nil
+	}
+	return out.Viewer.Zones[0].HTTPRequestsAdaptiveGroups[0].Count, nil
 }
 
 func (s *CloudflareAnalyticsService) queryHourly(ctx context.Context, trafficRange string, since time.Time, now time.Time) (models.TrafficStats, error) {
@@ -223,12 +282,14 @@ type trafficGraphQLResponse struct {
 }
 
 type trafficZone struct {
-	HTTPRequests1HGroups []trafficGroup `json:"httpRequests1hGroups"`
-	HTTPRequests1DGroups []trafficGroup `json:"httpRequests1dGroups"`
+	HTTPRequestsAdaptiveGroups []trafficGroup `json:"httpRequestsAdaptiveGroups"`
+	HTTPRequests1HGroups       []trafficGroup `json:"httpRequests1hGroups"`
+	HTTPRequests1DGroups       []trafficGroup `json:"httpRequests1dGroups"`
 }
 
 type trafficGroup struct {
-	Sum struct {
+	Count int64 `json:"count"`
+	Sum   struct {
 		Requests int64 `json:"requests"`
 	} `json:"sum"`
 	Uniq struct {
