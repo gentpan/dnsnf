@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
-import { ChevronLeft, ChevronRight, House, LockKeyhole, Search, XCircle } from 'lucide-react'
+import { Check, ChevronLeft, ChevronRight, Clipboard, House, LockKeyhole, Search, XCircle } from 'lucide-react'
 import { api, type DnsRecordType, type DnsResolver } from '@/lib/api'
 import { getRelatedArticles, type BlogArticle } from '@/lib/blog'
 import { Select } from './base-select'
@@ -488,13 +488,7 @@ function Rows({ rows, empty }: { rows: Array<{ name: string; detail: string }>; 
       <CardContent className="p-0">
         <div className="divide-y divide-zinc-100">
           {rows.map((row) => (
-            <div
-              key={`${row.name}-${row.detail}`}
-              className="grid gap-1 p-4 transition hover:bg-zinc-50/80 sm:grid-cols-[1fr_260px] sm:items-center"
-            >
-              <div className="min-w-0 truncate font-mono text-sm text-zinc-900">{row.name}</div>
-              <div className="truncate text-sm text-zinc-500 sm:text-right">{row.detail}</div>
-            </div>
+            <ResultRow key={`${row.name}-${row.detail}`} row={row} />
           ))}
         </div>
       </CardContent>
@@ -550,13 +544,7 @@ function PaginatedRows({
       <CardContent className="p-0">
         <div className="divide-y divide-zinc-100">
           {visibleRows.map((row) => (
-            <div
-              key={`${row.name}-${row.detail}`}
-              className="grid gap-1 p-4 transition hover:bg-zinc-50/80 sm:grid-cols-[1fr_260px] sm:items-center"
-            >
-              <div className="min-w-0 truncate font-mono text-sm text-zinc-900">{row.name}</div>
-              <div className="truncate text-sm text-zinc-500 sm:text-right">{row.detail}</div>
-            </div>
+            <ResultRow key={`${row.name}-${row.detail}`} row={row} />
           ))}
         </div>
         <div className="flex flex-col gap-3 border-t border-zinc-100 p-4 sm:flex-row sm:items-center sm:justify-between">
@@ -588,6 +576,50 @@ function PaginatedRows({
         </div>
       </CardContent>
     </Card>
+  )
+}
+
+function ResultRow({ row }: { row: { name: string; detail: string } }) {
+  const [copied, setCopied] = React.useState(false)
+  const copyTimerRef = React.useRef<number | null>(null)
+  const copyValue = row.detail ? `${row.name}\t${row.detail}` : row.name
+
+  React.useEffect(() => {
+    return () => {
+      if (copyTimerRef.current) window.clearTimeout(copyTimerRef.current)
+    }
+  }, [])
+
+  async function copyRow() {
+    try {
+      await navigator.clipboard.writeText(copyValue)
+      setCopied(true)
+      if (copyTimerRef.current) window.clearTimeout(copyTimerRef.current)
+      copyTimerRef.current = window.setTimeout(() => setCopied(false), 1200)
+    } catch {
+      setCopied(false)
+    }
+  }
+
+  return (
+    <div className="group relative grid gap-1 p-4 pr-14 transition hover:bg-zinc-50/80 sm:grid-cols-[1fr_260px] sm:items-center">
+      <div className="min-w-0 truncate font-mono text-sm text-zinc-900">{row.name}</div>
+      <div className="truncate text-sm text-zinc-500 sm:text-right">{row.detail}</div>
+      <button
+        type="button"
+        onClick={copyRow}
+        className={[
+          'absolute right-3 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-md border bg-white shadow-sm transition duration-150',
+          copied
+            ? 'border-emerald-200 text-emerald-600 opacity-100'
+            : 'border-zinc-200 text-zinc-500 opacity-0 hover:text-zinc-950 group-hover:opacity-100 focus:opacity-100',
+        ].join(' ')}
+        aria-label={copied ? 'Copied' : 'Copy row'}
+        title={copied ? 'Copied' : 'Copy'}
+      >
+        {copied ? <Check className="h-4 w-4" /> : <Clipboard className="h-4 w-4" />}
+      </button>
+    </div>
   )
 }
 
