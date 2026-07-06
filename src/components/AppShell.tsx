@@ -36,7 +36,7 @@ const nav = [
 
 const socialLinks = [
   { href: 'https://giantaccel.com', label: 'GiantAccel', icon: GiantAccelIcon },
-  { href: 'https://github.com/gentpan/dnsdotnf', label: 'GitHub', icon: GitHubIcon },
+  { href: 'https://github.com/gentpan/dnsnf', label: 'GitHub', icon: GitHubIcon },
   { href: 'https://x.com/gentpan', label: 'X', icon: XIcon },
 ]
 
