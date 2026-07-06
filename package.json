@@ -1,6 +1,25 @@
 {
   "name": "dnsnf-web",
   "private": true,
+  "description": "DNS.NF is a TanStack Start and Go powered DNS intelligence platform for DNS lookup, reverse DNS, reverse IP, subdomain discovery, DNSSEC, and a public DNS API.",
+  "homepage": "https://dns.nf",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/gentpan/dnsnf.git"
+  },
+  "keywords": [
+    "dns",
+    "dns-lookup",
+    "reverse-dns",
+    "reverse-ip",
+    "subdomain-discovery",
+    "dnssec",
+    "tanstack-start",
+    "react",
+    "go",
+    "postgresql",
+    "redis"
+  ],
   "type": "module",
   "imports": {
     "#/*": "./src/*",

@@ -1,16 +1,27 @@
 # DNS.NF
 
-DNS.NF is a fast DNS lookup, reverse DNS, reverse IP, subdomain discovery, DNSSEC, and public DNS API platform for domain and infrastructure intelligence.
+![DNS.NF](https://img.shields.io/badge/DNS.NF-DNS%20Intelligence-09090b?style=for-the-badge)
+![TanStack Start](https://img.shields.io/badge/TanStack%20Start-React-ff4154?style=for-the-badge&logo=react&logoColor=white)
+![Go API](https://img.shields.io/badge/Go-API-00add8?style=for-the-badge&logo=go&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Data-4169e1?style=for-the-badge&logo=postgresql&logoColor=white)
+![Redis](https://img.shields.io/badge/Redis-Cache-dc382d?style=for-the-badge&logo=redis&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-Ready-2496ed?style=for-the-badge&logo=docker&logoColor=white)
+![Public API](https://img.shields.io/badge/Public%20API-api.dns.nf-10b981?style=for-the-badge)
+![License](https://img.shields.io/badge/License-Proprietary-71717a?style=for-the-badge)
+
+DNS.NF is a modern DNS intelligence platform for DNS lookup, reverse DNS, reverse IP, subdomain discovery, reverse NS, reverse MX, DNSSEC checks, and a public DNS API.
 
 - Website: https://dns.nf
 - Public API: https://api.dns.nf
 - Repository: https://github.com/gentpan/dnsnf
 
-## Overview
+## Description
 
-DNS.NF helps developers, operators, security researchers, and domain owners inspect public DNS data from a clean web console and a simple HTTP API.
+DNS.NF helps developers, operators, security researchers, domain owners, and infrastructure teams inspect public DNS data from a clean web console and a simple HTTP API.
 
-The frontend is built with TanStack Start, React, TanStack Query, and Base UI/shadcn-style components. The backend is a Go API using pgx, Redis, PostgreSQL, and miekg/dns.
+The current version is built on TanStack Start, React 19, TanStack Router, TanStack Query, Base UI, Tailwind CSS 4, and shadcn/ui-style components. The backend is a Go API using pgx, Redis, PostgreSQL, and miekg/dns.
+
+Use it to check DNS records, investigate infrastructure relationships, discover public subdomains, inspect reverse DNS naming patterns, review DNSSEC posture, and integrate DNS intelligence into scripts or internal tools through `https://api.dns.nf`.
 
 ## Keywords
 
