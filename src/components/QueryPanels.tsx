@@ -21,8 +21,8 @@ const resolverOptions: Array<{
   { value: 'local', label: '本地', detail: 'Server resolver', icon: House },
   { value: 'cloudflare', label: 'Cloudflare', detail: '1.1.1.1 · 1.0.0.1', logoSrc: '/resolver-icons/cloudflare.svg' },
   { value: 'google', label: 'Google', detail: '8.8.8.8 · 8.8.4.4', logoSrc: '/resolver-icons/google.svg' },
-  { value: 'ali', label: 'Ali', detail: '223.5.5.5 · 223.6.6.6', logoSrc: '/resolver-icons/alibabacloud.svg' },
-  { value: 'tencent', label: '腾讯', detail: '119.29.29.29 · 182.254.116.116', logoSrc: '/resolver-icons/tencentcloud.svg' },
+  { value: 'ali', label: '阿里 DNS', detail: '223.5.5.5 · 223.6.6.6', logoSrc: '/resolver-icons/alibabacloud.svg' },
+  { value: 'tencent', label: '腾讯 DNS', detail: '119.29.29.29 · 182.254.116.116', logoSrc: '/resolver-icons/tencentcloud.svg' },
 ]
 const rdnsModeOptions = [
   { value: 'middle', label: 'Contains' },
