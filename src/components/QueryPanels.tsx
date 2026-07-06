@@ -14,6 +14,7 @@ import {
   Network,
   Route,
   Search,
+  Server,
   ShieldCheck,
   XCircle,
 } from 'lucide-react'
@@ -78,7 +79,7 @@ function getQueryTitleIcon(title: string) {
 
   const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
     'DNS Lookup': Search,
-    'Reverse IP': Network,
+    'Reverse IP': Server,
     'rDNS Search': Route,
     'Shared NS': Globe2,
     'Reverse MX': Mail,
