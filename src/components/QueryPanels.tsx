@@ -312,7 +312,7 @@ export function ReverseIpPanel() {
   const [pageSize, setPageSize] = React.useState(100)
   const query = useQuery({ queryKey: ['reverse-ip', submitted], queryFn: () => api.reverseIp(submitted), enabled: !!submitted })
   const rows = React.useMemo(
-    () => query.data?.data.domains.map((row) => ({ name: row.domain || '', detail: row.sources.join(', ') })) || [],
+    () => query.data?.data.domains.map((row) => ({ name: row.domain || '', detail: '' })) || [],
     [query.data],
   )
 
@@ -365,7 +365,7 @@ export function SubdomainPanel() {
       button="Discover"
       loading={query.isFetching}
       error={query.error}
-      rows={query.data?.data.items.map((row) => ({ name: row.host || row.domain || '', detail: row.sources.join(', ') })) || []}
+      rows={query.data?.data.items.map((row) => ({ name: row.host || row.domain || '', detail: '' })) || []}
       empty="Search a domain to collect public subdomain observations."
     />
   )
@@ -665,9 +665,14 @@ function ResultRow({ row }: { row: { name: string; detail: string } }) {
   }
 
   return (
-    <div className="group relative grid gap-1 p-4 pr-14 transition hover:bg-zinc-50/80 sm:grid-cols-[1fr_260px] sm:items-center">
+    <div
+      className={[
+        'group relative grid gap-1 p-4 pr-14 transition hover:bg-zinc-50/80 sm:items-center',
+        row.detail ? 'sm:grid-cols-[1fr_260px]' : '',
+      ].join(' ')}
+    >
       <div className="min-w-0 truncate font-mono text-sm text-zinc-900">{row.name}</div>
-      <div className="truncate text-sm text-zinc-500 sm:text-right">{row.detail}</div>
+      {row.detail ? <div className="truncate text-sm text-zinc-500 sm:text-right">{row.detail}</div> : null}
       <button
         type="button"
         onClick={copyRow}
