@@ -24,15 +24,31 @@ const rdnsModeOptions = [
 ]
 const pageSizeOptions = [50, 100, 200, 500].map((value) => ({ value: String(value), label: `${value} / page` }))
 
-export function PageTitle({ title, body }: { title: string; body: string }) {
+export function PageTitle({
+  title,
+  body,
+  eyebrow = 'DNS.NF console',
+  badge = 'Live query',
+  badgeTone = 'blue',
+}: {
+  title: string
+  body: string
+  eyebrow?: string
+  badge?: string
+  badgeTone?: 'zinc' | 'green' | 'blue' | 'amber' | 'red'
+}) {
   return (
-    <div className="mb-5 flex flex-col gap-3 border-b border-zinc-200 pb-5 sm:flex-row sm:items-end sm:justify-between">
-      <div>
-        <div className="mb-2 text-xs font-medium uppercase text-zinc-500">DNS.NF console</div>
+    <div className="mb-5 flex flex-col gap-4 border-b border-zinc-200 pb-5 sm:flex-row sm:items-end sm:justify-between">
+      <div className="min-w-0">
+        <div className="mb-2 text-xs font-medium uppercase text-zinc-500">{eyebrow}</div>
         <h1 className="text-2xl font-semibold tracking-normal text-zinc-950">{title}</h1>
         <p className="mt-2 max-w-3xl text-sm leading-6 text-zinc-600">{body}</p>
       </div>
-      <StatusBadge tone="blue" className="w-fit">Live query</StatusBadge>
+      {badge ? (
+        <StatusBadge tone={badgeTone} className="w-fit shrink-0 whitespace-nowrap">
+          {badge}
+        </StatusBadge>
+      ) : null}
     </div>
   )
 }

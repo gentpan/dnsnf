@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
-import { BookOpen, Database, Globe2, Layers3, Search, ShieldCheck } from 'lucide-react'
+import { BookOpen, Database, Globe2, Layers3, Route as RouteIcon, Search, ShieldCheck, TerminalSquare, type LucideIcon } from 'lucide-react'
 import { Badge, Card, CardContent, CardHeader } from '@/components/ui'
 import { PageTitle } from '@/components/QueryPanels'
 import { seoMeta } from '@/lib/seo'
@@ -84,12 +84,39 @@ function Page() {
     <div className="space-y-6">
       <PageTitle
         title="DNS.NF Docs"
+        eyebrow="DNS.NF docs"
+        badge="Guide"
+        badgeTone="zinc"
         body="Practical guidance for choosing the right DNS query, reading results, and understanding public data limits."
       />
 
       <Card>
         <CardHeader className="bg-zinc-50/60">
-          <div className="text-sm font-medium">Choose A Query</div>
+          <div className="text-sm font-medium">Start Here</div>
+          <div className="mt-1 text-xs leading-5 text-zinc-500">A short path for using the console without guessing which tool to open first.</div>
+        </CardHeader>
+        <CardContent className="grid gap-3">
+          <GuideStep
+            icon={RouteIcon}
+            title="Choose the query by question"
+            body="Use DNS Lookup for direct records, Reverse IP for shared IPv4 hosts, Subdomains for inventory, and Reverse NS/MX for infrastructure overlap."
+          />
+          <GuideStep
+            icon={BookOpen}
+            title="Read empty results carefully"
+            body="No rows means DNS.NF did not receive a usable public answer from the selected resolver or public source at that time."
+          />
+          <GuideStep
+            icon={TerminalSquare}
+            title="Automate with the API"
+            body="The Public API page mirrors the console endpoints and includes a live request builder plus cURL, JavaScript, Python, Go, PHP, and Java examples."
+          />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="bg-zinc-50/60">
+          <div className="text-sm font-medium">Choose a Query</div>
           <div className="mt-1 text-xs leading-5 text-zinc-500">Start from the question you are trying to answer.</div>
         </CardHeader>
         <CardContent className="grid gap-3">
@@ -101,12 +128,16 @@ function Page() {
                 to={item.href}
                 className="block rounded-lg border border-zinc-200 bg-white p-4 transition hover:border-zinc-300 hover:bg-zinc-50"
               >
-                <div className="flex flex-wrap items-center gap-2">
-                  <Icon className="h-4 w-4 text-sky-600" />
-                  <h2 className="text-sm font-semibold tracking-normal text-zinc-950">{item.title}</h2>
+                <div className="flex items-start gap-3">
+                  <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-sky-100 bg-sky-50">
+                    <Icon className="h-4 w-4 text-sky-600" />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <h2 className="text-sm font-semibold tracking-normal text-zinc-950">{item.title}</h2>
+                    <p className="mt-1 text-sm leading-6 text-zinc-600">{item.body}</p>
+                  </div>
                 </div>
-                <p className="mt-2 text-sm leading-6 text-zinc-600">{item.body}</p>
-                <div className="mt-3 flex flex-wrap gap-2">
+                <div className="mt-3 flex flex-wrap gap-1.5 pl-12">
                   {item.tags.map((tag) => (
                     <Badge key={tag}>{tag}</Badge>
                   ))}
@@ -123,12 +154,14 @@ function Page() {
           <div className="mt-1 text-xs leading-5 text-zinc-500">Common DNS records and what they usually mean.</div>
         </CardHeader>
         <CardContent className="grid gap-3">
-          {recordDocs.map(([name, body]) => (
-            <div key={name} className="rounded-lg border border-zinc-200 bg-white p-4">
-              <div className="font-mono text-sm font-medium text-zinc-950">{name}</div>
-              <p className="mt-2 text-sm leading-6 text-zinc-600">{body}</p>
-            </div>
-          ))}
+          <div className="divide-y divide-zinc-100 rounded-lg border border-zinc-200 bg-white">
+            {recordDocs.map(([name, body]) => (
+              <div key={name} className="grid gap-2 p-4 sm:grid-cols-[120px_1fr]">
+                <div className="font-mono text-sm font-medium text-zinc-950">{name}</div>
+                <p className="text-sm leading-6 text-zinc-600">{body}</p>
+              </div>
+            ))}
+          </div>
         </CardContent>
       </Card>
 
@@ -159,6 +192,28 @@ function Page() {
           ))}
         </CardContent>
       </Card>
+    </div>
+  )
+}
+
+function GuideStep({
+  icon: Icon,
+  title,
+  body,
+}: {
+  icon: LucideIcon
+  title: string
+  body: string
+}) {
+  return (
+    <div className="flex gap-3 rounded-lg border border-zinc-200 bg-white p-4">
+      <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-zinc-200 bg-zinc-50">
+        <Icon className="h-4 w-4 text-zinc-700" />
+      </span>
+      <div className="min-w-0">
+        <div className="text-sm font-semibold tracking-normal text-zinc-950">{title}</div>
+        <p className="mt-1 text-sm leading-6 text-zinc-600">{body}</p>
+      </div>
     </div>
   )
 }
