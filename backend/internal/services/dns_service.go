@@ -65,24 +65,46 @@ type DNSResolver interface {
 }
 
 type Service struct {
-	cache      CacheStore
-	logRepo    LogRepository
-	backupRepo BackupRepository
-	resolver   DNSResolver
-	logger     *slog.Logger
+	cache           CacheStore
+	logRepo         LogRepository
+	backupRepo      BackupRepository
+	resolver        DNSResolver
+	resolvers       map[string]DNSResolver
+	defaultResolver string
+	logger          *slog.Logger
 }
 
 func NewDNSService(cache CacheStore, logRepo LogRepository, backupRepo BackupRepository, resolver DNSResolver, logger *slog.Logger) *Service {
 	return &Service{
-		cache:      cache,
-		logRepo:    logRepo,
-		backupRepo: backupRepo,
-		resolver:   resolver,
-		logger:     logger,
+		cache:           cache,
+		logRepo:         logRepo,
+		backupRepo:      backupRepo,
+		resolver:        resolver,
+		resolvers:       map[string]DNSResolver{"cloudflare": resolver},
+		defaultResolver: "cloudflare",
+		logger:          logger,
+	}
+}
+
+func (s *Service) SetResolvers(defaultResolver string, resolvers map[string]DNSResolver) {
+	if len(resolvers) == 0 {
+		return
+	}
+	s.resolvers = resolvers
+	s.defaultResolver = normalizeResolverName(defaultResolver)
+	if _, ok := s.resolvers[s.defaultResolver]; !ok {
+		s.defaultResolver = "cloudflare"
+	}
+	if fallback, ok := s.resolvers[s.defaultResolver]; ok {
+		s.resolver = fallback
 	}
 }
 
 func (s *Service) Lookup(ctx context.Context, target, recordType, clientIP string) (models.APIResponse, error) {
+	return s.LookupWithResolver(ctx, target, recordType, "", clientIP)
+}
+
+func (s *Service) LookupWithResolver(ctx context.Context, target, recordType, resolverName, clientIP string) (models.APIResponse, error) {
 	target = strings.TrimSpace(target)
 	if target == "" {
 		return models.APIResponse{}, fmt.Errorf("domain or ip is required")
@@ -93,22 +115,43 @@ func (s *Service) Lookup(ctx context.Context, target, recordType, clientIP strin
 		return models.APIResponse{}, err
 	}
 
+	resolverName, resolver, err := s.selectResolver(resolverName)
+	if err != nil {
+		return models.APIResponse{}, err
+	}
+
 	if prefix, parseErr := netip.ParsePrefix(target); parseErr == nil {
-		return s.lookupCIDR(ctx, prefix, normalizedType, clientIP)
+		return s.lookupCIDR(ctx, prefix, normalizedType, resolverName, resolver, clientIP)
 	}
 
 	if ip := net.ParseIP(target); ip != nil {
-		return s.lookupIP(ctx, ip.String(), normalizedType, clientIP)
+		return s.lookupIP(ctx, ip.String(), normalizedType, resolverName, resolver, clientIP)
 	}
 
 	domain := utils.NormalizeDomain(target)
 	if err := utils.ValidateDomain(domain); err != nil {
 		return models.APIResponse{}, err
 	}
-	return s.lookupDomain(ctx, domain, normalizedType, clientIP)
+	return s.lookupDomain(ctx, domain, normalizedType, resolverName, resolver, clientIP)
 }
 
-func (s *Service) lookupDomain(ctx context.Context, domain, normalizedType, clientIP string) (models.APIResponse, error) {
+func (s *Service) selectResolver(name string) (string, DNSResolver, error) {
+	normalized := normalizeResolverName(name)
+	if normalized == "" {
+		normalized = s.defaultResolver
+	}
+	resolver, ok := s.resolvers[normalized]
+	if !ok {
+		return "", nil, fmt.Errorf("unsupported resolver")
+	}
+	return normalized, resolver, nil
+}
+
+func normalizeResolverName(name string) string {
+	return strings.ToLower(strings.TrimSpace(name))
+}
+
+func (s *Service) lookupDomain(ctx context.Context, domain, normalizedType, resolverName string, resolver DNSResolver, clientIP string) (models.APIResponse, error) {
 	types := utils.AllRecordTypes()
 	queryTypeForLog := "ALL"
 
@@ -123,8 +166,8 @@ func (s *Service) lookupDomain(ctx context.Context, domain, normalizedType, clie
 	records := models.NewDNSRecords()
 
 	var (
-		mu           sync.Mutex
-		wg           sync.WaitGroup
+		mu            sync.Mutex
+		wg            sync.WaitGroup
 		notFoundCount int
 		allCached     = true
 		firstErr      error
@@ -134,7 +177,7 @@ func (s *Service) lookupDomain(ctx context.Context, domain, normalizedType, clie
 		wg.Add(1)
 		go func(t string) {
 			defer wg.Done()
-			key := fmt.Sprintf("dns:%s:%s", domain, t)
+			key := fmt.Sprintf("dns:%s:%s:%s", resolverName, domain, t)
 			local := models.NewDNSRecords()
 
 			// Try Redis cache (no lock needed — each key is independent)
@@ -148,7 +191,7 @@ func (s *Service) lookupDomain(ctx context.Context, domain, normalizedType, clie
 			}
 
 			// DNS resolution runs concurrently — no lock held during network I/O
-			if resolveErr := s.resolveAndPopulate(ctx, domain, t, &local); resolveErr != nil {
+			if resolveErr := s.resolveAndPopulate(ctx, resolver, domain, t, &local); resolveErr != nil {
 				mu.Lock()
 				if errors.Is(resolveErr, errDomainNotFound) {
 					notFoundCount++
@@ -223,7 +266,7 @@ func mergeRecord(recordType string, src, dst *models.DNSRecords) {
 	}
 }
 
-func (s *Service) lookupCIDR(ctx context.Context, prefix netip.Prefix, normalizedType, clientIP string) (models.APIResponse, error) {
+func (s *Service) lookupCIDR(ctx context.Context, prefix netip.Prefix, normalizedType, resolverName string, resolver DNSResolver, clientIP string) (models.APIResponse, error) {
 	if normalizedType != "ALL" && normalizedType != "RDNS" {
 		return models.APIResponse{}, fmt.Errorf("cidr target supports only RDNS or ALL")
 	}
@@ -257,7 +300,7 @@ func (s *Service) lookupCIDR(ctx context.Context, prefix netip.Prefix, normalize
 
 	for current := start; ; current++ {
 		ip := uint32ToIP4(current).String()
-		hosts, cached, err := s.lookupIPRDNSWithCache(ctx, ip)
+		hosts, cached, err := s.lookupIPRDNSWithCache(ctx, ip, resolverName, resolver)
 		if err != nil {
 			failedLookups++
 			allCached = false
@@ -294,12 +337,12 @@ func (s *Service) lookupCIDR(ctx context.Context, prefix netip.Prefix, normalize
 	}, nil
 }
 
-func (s *Service) lookupIP(ctx context.Context, ip, normalizedType, clientIP string) (models.APIResponse, error) {
+func (s *Service) lookupIP(ctx context.Context, ip, normalizedType, resolverName string, resolver DNSResolver, clientIP string) (models.APIResponse, error) {
 	if normalizedType != "ALL" && normalizedType != "RDNS" {
 		return models.APIResponse{}, fmt.Errorf("ip target supports only RDNS or ALL")
 	}
 
-	reverseHosts, cached, err := s.lookupIPRDNSWithCache(ctx, ip)
+	reverseHosts, cached, err := s.lookupIPRDNSWithCache(ctx, ip, resolverName, resolver)
 	if err != nil {
 		return models.APIResponse{}, fmt.Errorf("lookup rdns failed: %w", err)
 	}
@@ -320,8 +363,8 @@ func (s *Service) lookupIP(ctx context.Context, ip, normalizedType, clientIP str
 	}, nil
 }
 
-func (s *Service) lookupIPRDNSWithCache(ctx context.Context, ip string) ([]string, bool, error) {
-	cacheKey := fmt.Sprintf("dns:%s:RDNS", ip)
+func (s *Service) lookupIPRDNSWithCache(ctx context.Context, ip, resolverName string, resolver DNSResolver) ([]string, bool, error) {
+	cacheKey := fmt.Sprintf("dns:%s:%s:RDNS", resolverName, ip)
 	reverseHosts := make([]string, 0)
 
 	if err := s.cache.Get(ctx, cacheKey, &reverseHosts); err == nil {
@@ -330,7 +373,7 @@ func (s *Service) lookupIPRDNSWithCache(ctx context.Context, ip string) ([]strin
 		s.logger.Warn("redis get failed", "error", err, "key", cacheKey)
 	}
 
-	resolvedHosts, err := s.resolver.LookupRDNS(ctx, ip)
+	resolvedHosts, err := resolver.LookupRDNS(ctx, ip)
 	if err != nil {
 		return nil, false, err
 	}
@@ -354,7 +397,6 @@ func ip4ToUint32(addr netip.Addr) uint32 {
 func uint32ToIP4(v uint32) netip.Addr {
 	return netip.AddrFrom4([4]byte{byte(v >> 24), byte(v >> 16), byte(v >> 8), byte(v)})
 }
-
 
 func (s *Service) tryCache(ctx context.Context, key, recordType string, records *models.DNSRecords) (bool, error) {
 	switch recordType {
@@ -419,27 +461,27 @@ func (s *Service) tryCache(ctx context.Context, key, recordType string, records 
 	return true, nil
 }
 
-func (s *Service) resolveAndPopulate(ctx context.Context, domain, recordType string, records *models.DNSRecords) error {
+func (s *Service) resolveAndPopulate(ctx context.Context, resolver DNSResolver, domain, recordType string, records *models.DNSRecords) error {
 	var err error
 	switch recordType {
 	case "A":
-		records.A, err = s.resolver.LookupA(ctx, domain)
+		records.A, err = resolver.LookupA(ctx, domain)
 	case "AAAA":
-		records.AAAA, err = s.resolver.LookupAAAA(ctx, domain)
+		records.AAAA, err = resolver.LookupAAAA(ctx, domain)
 	case "CNAME":
-		records.CNAME, err = s.resolver.LookupCNAME(ctx, domain)
+		records.CNAME, err = resolver.LookupCNAME(ctx, domain)
 	case "MX":
-		records.MX, err = s.resolver.LookupMX(ctx, domain)
+		records.MX, err = resolver.LookupMX(ctx, domain)
 	case "NS":
-		records.NS, err = s.resolver.LookupNS(ctx, domain)
+		records.NS, err = resolver.LookupNS(ctx, domain)
 	case "TXT":
-		records.TXT, err = s.resolver.LookupTXT(ctx, domain)
+		records.TXT, err = resolver.LookupTXT(ctx, domain)
 	case "CAA":
-		records.CAA, err = s.resolver.LookupCAA(ctx, domain)
+		records.CAA, err = resolver.LookupCAA(ctx, domain)
 	case "SOA":
-		records.SOA, err = s.resolver.LookupSOA(ctx, domain)
+		records.SOA, err = resolver.LookupSOA(ctx, domain)
 	case "SRV":
-		records.SRV, err = s.resolver.LookupSRV(ctx, domain)
+		records.SRV, err = resolver.LookupSRV(ctx, domain)
 	default:
 		return fmt.Errorf("unsupported type")
 	}
@@ -502,9 +544,13 @@ type NetResolver struct {
 	resolver  *net.Resolver
 	upstreams []string
 	client    *dns.Client
+	useSystem bool
 }
 
 func NewNetResolver(upstreams []string) *NetResolver {
+	if len(upstreams) == 0 {
+		upstreams = []string{"1.1.1.1:53"}
+	}
 	return &NetResolver{
 		resolver:  net.DefaultResolver,
 		upstreams: upstreams,
@@ -512,90 +558,176 @@ func NewNetResolver(upstreams []string) *NetResolver {
 	}
 }
 
+func NewSystemResolver() *NetResolver {
+	return &NetResolver{
+		resolver:  net.DefaultResolver,
+		upstreams: []string{},
+		client:    &dns.Client{Timeout: 5 * time.Second},
+		useSystem: true,
+	}
+}
+
 func (r *NetResolver) LookupA(ctx context.Context, domain string) ([]string, error) {
-	ips, err := r.resolver.LookupIP(ctx, "ip4", domain)
+	if r.useSystem {
+		ips, err := r.resolver.LookupIP(ctx, "ip4", domain)
+		if err != nil {
+			return nil, err
+		}
+		out := make([]string, 0, len(ips))
+		for _, ip := range ips {
+			if v4 := ip.To4(); v4 != nil {
+				out = append(out, v4.String())
+			}
+		}
+		return out, nil
+	}
+	resp, err := r.exchange(ctx, domain, dns.TypeA)
 	if err != nil {
 		return nil, err
 	}
-	out := make([]string, 0, len(ips))
-	for _, ip := range ips {
-		if v4 := ip.To4(); v4 != nil {
-			out = append(out, v4.String())
+	out := make([]string, 0, len(resp.Answer))
+	for _, ans := range resp.Answer {
+		if a, ok := ans.(*dns.A); ok {
+			out = append(out, a.A.String())
 		}
 	}
 	return out, nil
 }
 
 func (r *NetResolver) LookupAAAA(ctx context.Context, domain string) ([]string, error) {
-	ips, err := r.resolver.LookupIP(ctx, "ip6", domain)
+	if r.useSystem {
+		ips, err := r.resolver.LookupIP(ctx, "ip6", domain)
+		if err != nil {
+			return nil, err
+		}
+		out := make([]string, 0, len(ips))
+		for _, ip := range ips {
+			if ip.To16() != nil && ip.To4() == nil {
+				out = append(out, ip.String())
+			}
+		}
+		return out, nil
+	}
+	resp, err := r.exchange(ctx, domain, dns.TypeAAAA)
 	if err != nil {
 		return nil, err
 	}
-	out := make([]string, 0, len(ips))
-	for _, ip := range ips {
-		if ip.To16() != nil && ip.To4() == nil {
-			out = append(out, ip.String())
+	out := make([]string, 0, len(resp.Answer))
+	for _, ans := range resp.Answer {
+		if aaaa, ok := ans.(*dns.AAAA); ok {
+			out = append(out, aaaa.AAAA.String())
 		}
 	}
 	return out, nil
 }
 
 func (r *NetResolver) LookupCNAME(ctx context.Context, domain string) ([]string, error) {
-	cname, err := r.resolver.LookupCNAME(ctx, domain)
+	if r.useSystem {
+		cname, err := r.resolver.LookupCNAME(ctx, domain)
+		if err != nil {
+			return nil, err
+		}
+		clean := strings.TrimSuffix(strings.ToLower(cname), ".")
+		if clean == "" || clean == strings.ToLower(domain) {
+			return []string{}, nil
+		}
+		return []string{clean}, nil
+	}
+	resp, err := r.exchange(ctx, domain, dns.TypeCNAME)
 	if err != nil {
 		return nil, err
 	}
-	clean := strings.TrimSuffix(strings.ToLower(cname), ".")
-	if clean == "" || clean == strings.ToLower(domain) {
-		return []string{}, nil
+	out := make([]string, 0, len(resp.Answer))
+	for _, ans := range resp.Answer {
+		if cname, ok := ans.(*dns.CNAME); ok {
+			out = append(out, strings.TrimSuffix(strings.ToLower(cname.Target), "."))
+		}
 	}
-	return []string{clean}, nil
+	return out, nil
 }
 
 func (r *NetResolver) LookupMX(ctx context.Context, domain string) ([]models.MXRecord, error) {
-	mxRecords, err := r.resolver.LookupMX(ctx, domain)
+	if r.useSystem {
+		mxRecords, err := r.resolver.LookupMX(ctx, domain)
+		if err != nil {
+			return nil, err
+		}
+		out := make([]models.MXRecord, 0, len(mxRecords))
+		for _, mx := range mxRecords {
+			host := strings.TrimSuffix(mx.Host, ".")
+			if host == "" {
+				host = "."
+			}
+			out = append(out, models.MXRecord{Host: host, Pref: mx.Pref})
+		}
+		return out, nil
+	}
+	resp, err := r.exchange(ctx, domain, dns.TypeMX)
 	if err != nil {
 		return nil, err
 	}
-	out := make([]models.MXRecord, 0, len(mxRecords))
-	for _, mx := range mxRecords {
-		host := strings.TrimSuffix(mx.Host, ".")
+	out := make([]models.MXRecord, 0, len(resp.Answer))
+	for _, ans := range resp.Answer {
+		mx, ok := ans.(*dns.MX)
+		if !ok {
+			continue
+		}
+		host := strings.TrimSuffix(mx.Mx, ".")
 		if host == "" {
-			// RFC 7505 null MX is represented as ".", keep it explicit for UI/API consumers.
 			host = "."
 		}
-		out = append(out, models.MXRecord{Host: host, Pref: mx.Pref})
+		out = append(out, models.MXRecord{Host: host, Pref: mx.Preference})
 	}
 	return out, nil
 }
 
 func (r *NetResolver) LookupNS(ctx context.Context, domain string) ([]string, error) {
-	nsRecords, err := r.resolver.LookupNS(ctx, domain)
+	if r.useSystem {
+		nsRecords, err := r.resolver.LookupNS(ctx, domain)
+		if err != nil {
+			return nil, err
+		}
+		out := make([]string, 0, len(nsRecords))
+		for _, ns := range nsRecords {
+			out = append(out, strings.TrimSuffix(ns.Host, "."))
+		}
+		return out, nil
+	}
+	resp, err := r.exchange(ctx, domain, dns.TypeNS)
 	if err != nil {
 		return nil, err
 	}
-	out := make([]string, 0, len(nsRecords))
-	for _, ns := range nsRecords {
-		out = append(out, strings.TrimSuffix(ns.Host, "."))
+	out := make([]string, 0, len(resp.Answer))
+	for _, ans := range resp.Answer {
+		if ns, ok := ans.(*dns.NS); ok {
+			out = append(out, strings.TrimSuffix(ns.Ns, "."))
+		}
 	}
 	return out, nil
 }
 
 func (r *NetResolver) LookupTXT(ctx context.Context, domain string) ([]string, error) {
-	return r.resolver.LookupTXT(ctx, domain)
+	if r.useSystem {
+		return r.resolver.LookupTXT(ctx, domain)
+	}
+	resp, err := r.exchange(ctx, domain, dns.TypeTXT)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]string, 0, len(resp.Answer))
+	for _, ans := range resp.Answer {
+		if txt, ok := ans.(*dns.TXT); ok {
+			out = append(out, strings.Join(txt.Txt, ""))
+		}
+	}
+	return out, nil
 }
 
 func (r *NetResolver) LookupCAA(ctx context.Context, domain string) ([]models.CAARecord, error) {
-	msg := new(dns.Msg)
-	msg.SetQuestion(dns.Fqdn(domain), dns.TypeCAA)
-	var resp *dns.Msg
-	var err error
-	for _, upstream := range r.upstreams {
-		resp, _, err = r.client.ExchangeContext(ctx, msg, upstream)
-		if err == nil {
-			break
-		}
+	if r.useSystem {
+		return []models.CAARecord{}, nil
 	}
+	resp, err := r.exchange(ctx, domain, dns.TypeCAA)
 	if err != nil {
 		return nil, err
 	}
@@ -610,16 +742,10 @@ func (r *NetResolver) LookupCAA(ctx context.Context, domain string) ([]models.CA
 }
 
 func (r *NetResolver) LookupSOA(ctx context.Context, domain string) (models.SOARecord, error) {
-	msg := new(dns.Msg)
-	msg.SetQuestion(dns.Fqdn(domain), dns.TypeSOA)
-	var resp *dns.Msg
-	var err error
-	for _, upstream := range r.upstreams {
-		resp, _, err = r.client.ExchangeContext(ctx, msg, upstream)
-		if err == nil {
-			break
-		}
+	if r.useSystem {
+		return models.SOARecord{}, nil
 	}
+	resp, err := r.exchange(ctx, domain, dns.TypeSOA)
 	if err != nil {
 		return models.SOARecord{}, err
 	}
@@ -642,16 +768,10 @@ func (r *NetResolver) LookupSOA(ctx context.Context, domain string) (models.SOAR
 }
 
 func (r *NetResolver) LookupSRV(ctx context.Context, domain string) ([]models.SRVRecord, error) {
-	msg := new(dns.Msg)
-	msg.SetQuestion(dns.Fqdn(domain), dns.TypeSRV)
-	var resp *dns.Msg
-	var err error
-	for _, upstream := range r.upstreams {
-		resp, _, err = r.client.ExchangeContext(ctx, msg, upstream)
-		if err == nil {
-			break
-		}
+	if r.useSystem {
+		return []models.SRVRecord{}, nil
 	}
+	resp, err := r.exchange(ctx, domain, dns.TypeSRV)
 	if err != nil {
 		return nil, err
 	}
@@ -671,16 +791,310 @@ func (r *NetResolver) LookupSRV(ctx context.Context, domain string) ([]models.SR
 }
 
 func (r *NetResolver) LookupRDNS(ctx context.Context, ip string) ([]string, error) {
-	hosts, err := r.resolver.LookupAddr(ctx, ip)
+	if r.useSystem {
+		hosts, err := r.resolver.LookupAddr(ctx, ip)
+		if err != nil {
+			if strings.Contains(err.Error(), "no such host") {
+				return []string{}, nil
+			}
+			return nil, err
+		}
+		out := make([]string, 0, len(hosts))
+		for _, h := range hosts {
+			out = append(out, strings.TrimSuffix(strings.ToLower(h), "."))
+		}
+		return out, nil
+	}
+	ptr, err := dns.ReverseAddr(ip)
 	if err != nil {
-		if strings.Contains(err.Error(), "no such host") {
+		return nil, err
+	}
+	resp, err := r.exchange(ctx, ptr, dns.TypePTR)
+	if err != nil {
+		if isNotFoundErr(err) {
 			return []string{}, nil
 		}
 		return nil, err
 	}
-	out := make([]string, 0, len(hosts))
-	for _, h := range hosts {
-		out = append(out, strings.TrimSuffix(strings.ToLower(h), "."))
+	out := make([]string, 0, len(resp.Answer))
+	for _, ans := range resp.Answer {
+		if ptr, ok := ans.(*dns.PTR); ok {
+			out = append(out, strings.TrimSuffix(strings.ToLower(ptr.Ptr), "."))
+		}
 	}
 	return out, nil
+}
+
+func (r *NetResolver) exchange(ctx context.Context, domain string, qtype uint16) (*dns.Msg, error) {
+	if r.useSystem {
+		return nil, fmt.Errorf("system resolver does not support raw exchange")
+	}
+
+	msg := new(dns.Msg)
+	msg.SetQuestion(dns.Fqdn(domain), qtype)
+	msg.RecursionDesired = true
+
+	var lastErr error
+	for _, upstream := range r.upstreams {
+		resp, _, err := r.client.ExchangeContext(ctx, msg, upstream)
+		if err != nil {
+			lastErr = err
+			continue
+		}
+		if resp.Rcode == dns.RcodeNameError {
+			return nil, &net.DNSError{Err: "no such host", Name: domain, IsNotFound: true}
+		}
+		if resp.Rcode != dns.RcodeSuccess {
+			lastErr = fmt.Errorf("dns rcode %s", dns.RcodeToString[resp.Rcode])
+			continue
+		}
+		return resp, nil
+	}
+	if lastErr != nil {
+		return nil, lastErr
+	}
+	return nil, fmt.Errorf("no dns upstreams configured")
+}
+
+type AuthoritativeResolver struct {
+	recursive *NetResolver
+	client    *dns.Client
+}
+
+func NewAuthoritativeResolver(recursive *NetResolver) *AuthoritativeResolver {
+	return &AuthoritativeResolver{
+		recursive: recursive,
+		client:    &dns.Client{Timeout: 5 * time.Second},
+	}
+}
+
+func (r *AuthoritativeResolver) LookupA(ctx context.Context, domain string) ([]string, error) {
+	resp, err := r.exchange(ctx, domain, dns.TypeA)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]string, 0, len(resp.Answer))
+	for _, ans := range resp.Answer {
+		if a, ok := ans.(*dns.A); ok {
+			out = append(out, a.A.String())
+		}
+	}
+	return out, nil
+}
+
+func (r *AuthoritativeResolver) LookupAAAA(ctx context.Context, domain string) ([]string, error) {
+	resp, err := r.exchange(ctx, domain, dns.TypeAAAA)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]string, 0, len(resp.Answer))
+	for _, ans := range resp.Answer {
+		if aaaa, ok := ans.(*dns.AAAA); ok {
+			out = append(out, aaaa.AAAA.String())
+		}
+	}
+	return out, nil
+}
+
+func (r *AuthoritativeResolver) LookupCNAME(ctx context.Context, domain string) ([]string, error) {
+	resp, err := r.exchange(ctx, domain, dns.TypeCNAME)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]string, 0, len(resp.Answer))
+	for _, ans := range resp.Answer {
+		if cname, ok := ans.(*dns.CNAME); ok {
+			out = append(out, strings.TrimSuffix(strings.ToLower(cname.Target), "."))
+		}
+	}
+	return out, nil
+}
+
+func (r *AuthoritativeResolver) LookupMX(ctx context.Context, domain string) ([]models.MXRecord, error) {
+	resp, err := r.exchange(ctx, domain, dns.TypeMX)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]models.MXRecord, 0, len(resp.Answer))
+	for _, ans := range resp.Answer {
+		if mx, ok := ans.(*dns.MX); ok {
+			host := strings.TrimSuffix(mx.Mx, ".")
+			if host == "" {
+				host = "."
+			}
+			out = append(out, models.MXRecord{Host: host, Pref: mx.Preference})
+		}
+	}
+	return out, nil
+}
+
+func (r *AuthoritativeResolver) LookupNS(ctx context.Context, domain string) ([]string, error) {
+	resp, err := r.exchange(ctx, domain, dns.TypeNS)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]string, 0, len(resp.Answer))
+	for _, ans := range resp.Answer {
+		if ns, ok := ans.(*dns.NS); ok {
+			out = append(out, strings.TrimSuffix(ns.Ns, "."))
+		}
+	}
+	return out, nil
+}
+
+func (r *AuthoritativeResolver) LookupTXT(ctx context.Context, domain string) ([]string, error) {
+	resp, err := r.exchange(ctx, domain, dns.TypeTXT)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]string, 0, len(resp.Answer))
+	for _, ans := range resp.Answer {
+		if txt, ok := ans.(*dns.TXT); ok {
+			out = append(out, strings.Join(txt.Txt, ""))
+		}
+	}
+	return out, nil
+}
+
+func (r *AuthoritativeResolver) LookupCAA(ctx context.Context, domain string) ([]models.CAARecord, error) {
+	resp, err := r.exchange(ctx, domain, dns.TypeCAA)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]models.CAARecord, 0, len(resp.Answer))
+	for _, ans := range resp.Answer {
+		if caa, ok := ans.(*dns.CAA); ok {
+			out = append(out, models.CAARecord{Flag: caa.Flag, Tag: caa.Tag, Value: caa.Value})
+		}
+	}
+	return out, nil
+}
+
+func (r *AuthoritativeResolver) LookupSOA(ctx context.Context, domain string) (models.SOARecord, error) {
+	resp, err := r.exchange(ctx, domain, dns.TypeSOA)
+	if err != nil {
+		return models.SOARecord{}, err
+	}
+	for _, ans := range resp.Answer {
+		if soa, ok := ans.(*dns.SOA); ok {
+			return models.SOARecord{
+				NS:      strings.TrimSuffix(soa.Ns, "."),
+				MBox:    strings.TrimSuffix(soa.Mbox, "."),
+				Serial:  soa.Serial,
+				Refresh: soa.Refresh,
+				Retry:   soa.Retry,
+				Expire:  soa.Expire,
+				Minttl:  soa.Minttl,
+			}, nil
+		}
+	}
+	return models.SOARecord{}, nil
+}
+
+func (r *AuthoritativeResolver) LookupSRV(ctx context.Context, domain string) ([]models.SRVRecord, error) {
+	resp, err := r.exchange(ctx, domain, dns.TypeSRV)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]models.SRVRecord, 0, len(resp.Answer))
+	for _, ans := range resp.Answer {
+		if srv, ok := ans.(*dns.SRV); ok {
+			out = append(out, models.SRVRecord{
+				Target:   strings.TrimSuffix(srv.Target, "."),
+				Port:     srv.Port,
+				Priority: srv.Priority,
+				Weight:   srv.Weight,
+			})
+		}
+	}
+	return out, nil
+}
+
+func (r *AuthoritativeResolver) LookupRDNS(ctx context.Context, ip string) ([]string, error) {
+	ptr, err := dns.ReverseAddr(ip)
+	if err != nil {
+		return nil, err
+	}
+	resp, err := r.exchange(ctx, ptr, dns.TypePTR)
+	if err != nil {
+		if isNotFoundErr(err) {
+			return []string{}, nil
+		}
+		return nil, err
+	}
+	out := make([]string, 0, len(resp.Answer))
+	for _, ans := range resp.Answer {
+		if ptr, ok := ans.(*dns.PTR); ok {
+			out = append(out, strings.TrimSuffix(strings.ToLower(ptr.Ptr), "."))
+		}
+	}
+	return out, nil
+}
+
+func (r *AuthoritativeResolver) exchange(ctx context.Context, domain string, qtype uint16) (*dns.Msg, error) {
+	nsRecords, err := r.recursive.LookupNS(ctx, domain)
+	if err != nil || len(nsRecords) == 0 {
+		zone := parentDomain(domain)
+		for zone != "" {
+			nsRecords, err = r.recursive.LookupNS(ctx, zone)
+			if err == nil && len(nsRecords) > 0 {
+				break
+			}
+			zone = parentDomain(zone)
+		}
+	}
+	if len(nsRecords) == 0 {
+		if err != nil {
+			return nil, err
+		}
+		return nil, &net.DNSError{Err: "no authoritative nameservers", Name: domain, IsNotFound: true}
+	}
+
+	msg := new(dns.Msg)
+	msg.SetQuestion(dns.Fqdn(domain), qtype)
+	msg.RecursionDesired = false
+
+	var lastErr error
+	for _, nsHost := range nsRecords {
+		ips, err := r.recursive.LookupA(ctx, nsHost)
+		if err != nil || len(ips) == 0 {
+			aaaa, aaaaErr := r.recursive.LookupAAAA(ctx, nsHost)
+			if aaaaErr != nil && err == nil {
+				err = aaaaErr
+			}
+			ips = append(ips, aaaa...)
+		}
+		if err != nil && len(ips) == 0 {
+			lastErr = err
+			continue
+		}
+		for _, ip := range ips {
+			resp, _, err := r.client.ExchangeContext(ctx, msg, net.JoinHostPort(ip, "53"))
+			if err != nil {
+				lastErr = err
+				continue
+			}
+			if resp.Rcode == dns.RcodeNameError {
+				return nil, &net.DNSError{Err: "no such host", Name: domain, IsNotFound: true}
+			}
+			if resp.Rcode != dns.RcodeSuccess {
+				lastErr = fmt.Errorf("dns rcode %s", dns.RcodeToString[resp.Rcode])
+				continue
+			}
+			return resp, nil
+		}
+	}
+	if lastErr != nil {
+		return nil, lastErr
+	}
+	return nil, fmt.Errorf("authoritative lookup failed")
+}
+
+func parentDomain(domain string) string {
+	domain = strings.TrimSuffix(strings.ToLower(strings.TrimSpace(domain)), ".")
+	parts := strings.Split(domain, ".")
+	if len(parts) <= 2 {
+		return ""
+	}
+	return strings.Join(parts[1:], ".")
 }

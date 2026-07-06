@@ -2,7 +2,7 @@ import * as React from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
 import { Loader2, LockKeyhole, Search, XCircle } from 'lucide-react'
-import { api, type DnsRecordType } from '@/lib/api'
+import { api, type DnsRecordType, type DnsResolver } from '@/lib/api'
 import { getRelatedArticles, type BlogArticle } from '@/lib/blog'
 import { Select } from './base-select'
 import { Badge, Button, Card, CardContent, CardHeader, EmptyState, Input, StatusBadge } from './ui'
@@ -10,6 +10,13 @@ import { Badge, Button, Card, CardContent, CardHeader, EmptyState, Input, Status
 const recordTypes: DnsRecordType[] = ['ALL', 'A', 'AAAA', 'CNAME', 'MX', 'NS', 'TXT', 'CAA', 'SOA', 'SRV', 'PTR']
 const displayRecordTypes = recordTypes.filter((recordType) => recordType !== 'ALL')
 const recordTypeOptions = recordTypes.map((value) => ({ value, label: value }))
+const resolverOptions: Array<{ value: DnsResolver; label: string }> = [
+  { value: 'cloudflare', label: 'Cloudflare' },
+  { value: 'google', label: 'Google DNS' },
+  { value: 'ali', label: 'Ali DNS' },
+  { value: 'authoritative', label: 'Authoritative' },
+  { value: 'local', label: 'Local DNS' },
+]
 const rdnsModeOptions = [
   { value: 'middle', label: 'Contains' },
   { value: 'left', label: 'Starts with' },
@@ -96,9 +103,10 @@ export function LookupPanel({ initialTarget = '' }: { initialTarget?: string }) 
   const [target, setTarget] = React.useState(initialTarget)
   const [submitted, setSubmitted] = React.useState(initialTarget)
   const [type, setType] = React.useState<DnsRecordType>('ALL')
+  const [resolver, setResolver] = React.useState<DnsResolver>('cloudflare')
   const query = useQuery({
-    queryKey: ['lookup', submitted, type],
-    queryFn: () => api.lookup(submitted, type),
+    queryKey: ['lookup', submitted, type, resolver],
+    queryFn: () => api.lookup(submitted, type, resolver),
     enabled: submitted.length > 0,
   })
 
@@ -110,11 +118,14 @@ export function LookupPanel({ initialTarget = '' }: { initialTarget?: string }) 
             <Search className="h-4 w-4 text-sky-600" />
             Query target
           </div>
-          <Badge>{type}</Badge>
+          <div className="flex items-center gap-2">
+            <Badge>{resolverOptions.find((option) => option.value === resolver)?.label}</Badge>
+            <Badge>{type}</Badge>
+          </div>
         </CardHeader>
         <CardContent>
           <form
-            className="grid gap-3 sm:grid-cols-[1fr_150px_auto]"
+            className="grid gap-3 sm:grid-cols-[1fr_150px_180px_auto]"
             onSubmit={(event) => {
               event.preventDefault()
               setSubmitted(target.trim())
@@ -126,6 +137,12 @@ export function LookupPanel({ initialTarget = '' }: { initialTarget?: string }) 
               onValueChange={(next) => setType(next as DnsRecordType)}
               options={recordTypeOptions}
               ariaLabel="Record type"
+            />
+            <Select
+              value={resolver}
+              onValueChange={(next) => setResolver(next as DnsResolver)}
+              options={resolverOptions}
+              ariaLabel="DNS resolver"
             />
             <Button>
               <Search className="h-4 w-4" />

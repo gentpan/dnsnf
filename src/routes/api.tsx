@@ -66,6 +66,7 @@ const endpoints: ApiEndpoint[] = [
     params: [
       { name: 'domain', type: 'string', required: true, defaultValue: 'example.com', description: 'Domain name, IPv4 address, or IPv4 CIDR target.' },
       { name: 'type', type: 'string', defaultValue: 'ALL', description: 'Record type. Use ALL for a complete lookup.' },
+      { name: 'resolver', type: 'string', defaultValue: 'cloudflare', description: 'Resolver: cloudflare, google, ali, authoritative, or local.' },
     ],
   },
   {
@@ -150,7 +151,7 @@ const featureRows = [
 ]
 
 const endpointRows = [
-  ['GET', '/v1/dns/lookup', 'domain, type?', 'Standard DNS lookup for domain targets', '60 req/min per client IP'],
+  ['GET', '/v1/dns/lookup', 'domain, type?, resolver?', 'Standard DNS lookup for domain targets', '60 req/min per client IP'],
   ['GET', '/v1/dns/rdns', 'target (ipv4|cidr)', 'Concurrent reverse DNS scan with PTR/CNAME scoring', '30s cooldown per client'],
   ['GET', '/api/reverse-ip', 'ip', 'Find public domains pointing to an IPv4', 'Public source dependent'],
   ['GET', '/api/reverse-ns', 'domain, limit?', 'Find domains sharing authoritative NS servers', 'Server-side capped and cached'],

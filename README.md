@@ -208,10 +208,12 @@ curl "https://api.dns.nf/health"
 DNS 查询：
 
 ```bash
-curl "https://api.dns.nf/v1/dns/lookup?domain=example.com&type=ALL"
-curl "https://api.dns.nf/v1/dns/lookup?domain=example.com&type=MX"
-curl "https://api.dns.nf/v1/dns/lookup?domain=example.com&type=TXT"
+curl "https://api.dns.nf/v1/dns/lookup?domain=example.com&type=ALL&resolver=cloudflare"
+curl "https://api.dns.nf/v1/dns/lookup?domain=example.com&type=MX&resolver=google"
+curl "https://api.dns.nf/v1/dns/lookup?domain=example.com&type=TXT&resolver=ali"
 ```
+
+`resolver` 支持 `cloudflare`、`google`、`ali`、`authoritative` 和 `local`。默认使用 `cloudflare`。
 
 反向 DNS：
 
@@ -480,10 +482,12 @@ curl "https://api.dns.nf/health"
 DNS lookup:
 
 ```bash
-curl "https://api.dns.nf/v1/dns/lookup?domain=example.com&type=ALL"
-curl "https://api.dns.nf/v1/dns/lookup?domain=example.com&type=MX"
-curl "https://api.dns.nf/v1/dns/lookup?domain=example.com&type=TXT"
+curl "https://api.dns.nf/v1/dns/lookup?domain=example.com&type=ALL&resolver=cloudflare"
+curl "https://api.dns.nf/v1/dns/lookup?domain=example.com&type=MX&resolver=google"
+curl "https://api.dns.nf/v1/dns/lookup?domain=example.com&type=TXT&resolver=ali"
 ```
+
+The `resolver` parameter supports `cloudflare`, `google`, `ali`, `authoritative`, and `local`. The default resolver is `cloudflare`.
 
 Reverse DNS:
 

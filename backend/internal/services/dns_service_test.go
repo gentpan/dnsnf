@@ -139,7 +139,7 @@ func (cidrPartialErrorResolver) LookupRDNS(_ context.Context, ip string) ([]stri
 }
 
 func TestLookup_CacheHit(t *testing.T) {
-	cache := &mockCache{store: map[string]any{"dns:example.com:A": []string{"1.1.1.1"}}}
+	cache := &mockCache{store: map[string]any{"dns:cloudflare:example.com:A": []string{"1.1.1.1"}}}
 	svc := NewDNSService(cache, noopRepo{}, noopRepo{}, mockResolver{}, slog.New(slog.NewTextHandler(os.Stdout, nil)))
 
 	resp, err := svc.Lookup(context.Background(), "example.com", "A", "127.0.0.1")
@@ -168,8 +168,30 @@ func TestLookup_CacheMiss(t *testing.T) {
 	if len(resp.Data.Records.TXT) != 1 {
 		t.Fatalf("unexpected TXT records: %+v", resp.Data.Records.TXT)
 	}
-	if _, ok := cache.store["dns:example.com:TXT"]; !ok {
+	if _, ok := cache.store["dns:cloudflare:example.com:TXT"]; !ok {
 		t.Fatalf("expected TXT to be cached")
+	}
+}
+
+func TestLookup_WithResolverUsesResolverScopedCache(t *testing.T) {
+	cache := &mockCache{store: map[string]any{
+		"dns:google:example.com:A": []string{"8.8.8.8"},
+	}}
+	svc := NewDNSService(cache, noopRepo{}, noopRepo{}, mockResolver{}, slog.New(slog.NewTextHandler(os.Stdout, nil)))
+	svc.SetResolvers("cloudflare", map[string]DNSResolver{
+		"cloudflare": mockResolver{},
+		"google":     mockResolver{},
+	})
+
+	resp, err := svc.LookupWithResolver(context.Background(), "example.com", "A", "google", "127.0.0.1")
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+	if !resp.Cached {
+		t.Fatalf("expected cached=true")
+	}
+	if got := resp.Data.Records.A[0]; got != "8.8.8.8" {
+		t.Fatalf("expected google scoped cache result, got %s", got)
 	}
 }
 

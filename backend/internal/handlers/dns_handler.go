@@ -44,9 +44,10 @@ func (h *DNSHandler) LookupDNS(w http.ResponseWriter, r *http.Request) {
 	}
 
 	recordType := strings.TrimSpace(r.URL.Query().Get("type"))
+	resolver := strings.TrimSpace(r.URL.Query().Get("resolver"))
 	clientIP := extractClientIP(r)
 
-	resp, err := h.svc.Lookup(r.Context(), target, recordType, clientIP)
+	resp, err := h.svc.LookupWithResolver(r.Context(), target, recordType, resolver, clientIP)
 	if err != nil {
 		writeError(w, http.StatusBadRequest, err.Error())
 		return

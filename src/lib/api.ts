@@ -11,6 +11,8 @@ export type DnsRecordType =
   | 'TXT'
   | 'CAA'
 
+export type DnsResolver = 'cloudflare' | 'google' | 'ali' | 'authoritative' | 'local'
+
 export type ApiResponse<T> = {
   code: number
   data: T
@@ -106,9 +108,12 @@ function browserOrigin() {
 export const api = {
   health: () => requestRaw<HealthStatus>('/health'),
   stats: () => request<StatsOverview>('/v1/dns/stats/overview'),
-  lookup: (target: string, type: DnsRecordType) => {
+  lookup: (target: string, type: DnsRecordType, resolver: DnsResolver = 'cloudflare') => {
     const isIp = target.includes(':') || /^(\d{1,3}\.){3}\d{1,3}(?:\/\d{1,2})?$/.test(target)
-    return request<DnsLookupData>('/v1/dns/lookup', isIp ? { ip: target, type } : { domain: target, type })
+    return request<DnsLookupData>(
+      '/v1/dns/lookup',
+      isIp ? { ip: target, type, resolver } : { domain: target, type, resolver },
+    )
   },
   rdnsSearch: (keyword: string, mode: string, limit = 200) =>
     request<RDNSSearchData>('/v1/dns/rdns', { keyword, mode, limit }),

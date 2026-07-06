@@ -48,6 +48,14 @@ func main() {
 
 	resolver := services.NewNetResolver(cfg.DNSUpstream)
 	dnsService := services.NewDNSService(redisStore, pgRepo, pgRepo, resolver, logger)
+	cloudflareResolver := services.NewNetResolver([]string{"1.1.1.1:53", "1.0.0.1:53"})
+	dnsService.SetResolvers("cloudflare", map[string]services.DNSResolver{
+		"cloudflare":    cloudflareResolver,
+		"google":        services.NewNetResolver([]string{"8.8.8.8:53", "8.8.4.4:53"}),
+		"ali":           services.NewNetResolver([]string{"223.5.5.5:53", "223.6.6.6:53"}),
+		"local":         services.NewSystemResolver(),
+		"authoritative": services.NewAuthoritativeResolver(cloudflareResolver),
+	})
 	dnsHandler := handlers.NewDNSHandler(dnsService)
 	historyHandler := handlers.NewDnsHistoryHandler(pgRepo, cfg.InternalToken)
 	rdnsHandler := handlers.NewRdnsRecordHandler(pgRepo, cfg.InternalToken)
