@@ -735,15 +735,17 @@ function ReferenceSection({ title, description, children }: { title: string; des
 
 function EndpointCard({ endpoint }: { endpoint: ApiEndpoint }) {
   return (
-    <div className="rounded-lg border border-zinc-200 bg-white p-4">
-      <div className="flex flex-wrap items-center gap-2">
-        <StatusBadge tone="blue" className="font-mono">
-          {endpoint.method}
-        </StatusBadge>
-        <code className="break-all rounded-md bg-zinc-100 px-1.5 py-1 font-mono text-xs text-zinc-900">{endpoint.path}</code>
+    <div className="rounded-lg border border-zinc-200 bg-white p-4 transition hover:border-zinc-300 hover:shadow-sm hover:shadow-zinc-200/60 sm:p-5">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0 text-sm font-semibold text-zinc-950">{endpoint.title}</div>
+        <div className="flex shrink-0 flex-wrap items-center gap-2 sm:justify-end">
+          <StatusBadge tone="blue" className="font-mono">
+            {endpoint.method}
+          </StatusBadge>
+          <code className="break-all rounded-md bg-zinc-100 px-2 py-1 font-mono text-xs text-zinc-900">{endpoint.path}</code>
+        </div>
       </div>
-      <div className="mt-3 text-sm font-semibold text-zinc-950">{endpoint.title}</div>
-      <div className="mt-1 text-sm leading-6 text-zinc-600">{endpoint.description}</div>
+      <div className="mt-3 text-sm leading-6 text-zinc-600">{endpoint.description}</div>
       <div className="mt-3 flex flex-wrap gap-2">
         {endpoint.params.map((param) => (
           <span key={param.name} className="rounded-md border border-zinc-200 bg-zinc-50 px-2 py-1 font-mono text-xs text-zinc-700">
