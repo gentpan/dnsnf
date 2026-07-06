@@ -50,8 +50,11 @@ const trafficStatsRefreshMs = 60 * 60 * 1000
 
 export function AppShell() {
   const [trafficRange, setTrafficRange] = React.useState<TrafficRange>('24h')
-  const isRouteLoading = useRouterState({
-    select: (state) => state.status === 'pending',
+  const routeState = useRouterState({
+    select: (state) => ({
+      isLoading: state.status === 'pending',
+      path: state.location.pathname,
+    }),
   })
   const health = useQuery({
     queryKey: ['api-health'],
@@ -134,9 +137,9 @@ export function AppShell() {
                   key={item.to}
                   to={item.to}
                   preload="intent"
-                  preloadDelay={80}
+                  preloadDelay={40}
                   title={item.label}
-                  className="flex shrink-0 items-center gap-2 rounded-md px-3 py-2 text-sm text-zinc-600 transition hover:bg-zinc-50 hover:text-zinc-950 [&.active]:bg-zinc-950 [&.active]:font-medium [&.active]:text-white [&.active]:shadow-sm"
+                  className="flex shrink-0 items-center gap-2 rounded-md px-3 py-2 text-sm text-zinc-600 transition duration-150 hover:bg-zinc-50 hover:text-zinc-950 active:scale-[0.98] [&.active]:bg-zinc-950 [&.active]:font-medium [&.active]:text-white [&.active]:shadow-sm"
                 >
                   <Icon className="h-4 w-4" />
                   {item.label}
@@ -185,12 +188,37 @@ export function AppShell() {
           </Card>
         </aside>
         <main className="relative min-w-0">
-          <AjaxRouteProgress active={isRouteLoading} />
-          <Outlet />
+          <AjaxRouteProgress active={routeState.isLoading} />
+          <RouteContentTransition routeKey={routeState.path}>
+            <Outlet />
+          </RouteContentTransition>
         </main>
       </div>
       <AppFooter />
       <OverlayScrollBar />
+    </div>
+  )
+}
+
+function RouteContentTransition({ children, routeKey }: { children: React.ReactNode; routeKey: string }) {
+  return (
+    <div key={routeKey} className="min-w-0 animate-[dnsnf-route-enter_180ms_ease-out_both]">
+      {children}
+      <style>
+        {`
+          @keyframes dnsnf-route-enter {
+            0% {
+              opacity: 0;
+              transform: translateY(6px);
+            }
+
+            100% {
+              opacity: 1;
+              transform: translateY(0);
+            }
+          }
+        `}
+      </style>
     </div>
   )
 }
@@ -208,11 +236,11 @@ function AjaxRouteProgress({ active }: { active: boolean }) {
     <div
       aria-hidden="true"
       className={[
-        'pointer-events-none absolute left-0 right-0 top-0 z-10 h-0.5 overflow-hidden rounded-full bg-transparent transition-opacity duration-150',
+        'pointer-events-none absolute left-0 right-0 top-0 z-10 h-0.5 overflow-hidden rounded-full bg-transparent transition-opacity duration-100',
         isVisible ? 'opacity-100' : 'opacity-0',
       ].join(' ')}
     >
-      <div className="h-full w-1/2 animate-[dnsnf-route-progress_0.9s_ease-in-out_infinite] rounded-full bg-sky-600" />
+      <div className="h-full w-1/2 animate-[dnsnf-route-progress_0.55s_ease-in-out_infinite] rounded-full bg-sky-600" />
       <style>
         {`
           @keyframes dnsnf-route-progress {
