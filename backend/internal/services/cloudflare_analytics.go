@@ -14,7 +14,7 @@ import (
 
 type TrafficBaselineStore interface {
 	GetTrafficStatsCursor(ctx context.Context) (models.TrafficStatsCursor, error)
-	UpdateTrafficStatsCursor(ctx context.Context, checkedAt time.Time, totalRequests int64, seededFrom30D bool) error
+	UpdateTrafficStatsCursor(ctx context.Context, checkedAt time.Time, totalRequests int64, totalVisitors int64, seededFrom30D bool) error
 }
 
 type TrafficCache interface {
@@ -101,30 +101,40 @@ func (s *CloudflareAnalyticsService) fetchTrafficStats(ctx context.Context, traf
 		cursor.LastCheckedAt = now
 	}
 	if !cursor.SeededFrom30D {
-		seed, err := s.queryDaily(ctx, trafficRange, now.AddDate(0, 0, -30), now, false)
+		seed, err := s.queryDaily(ctx, trafficRange, now.AddDate(0, 0, -30), now, true)
 		if err != nil {
 			return models.TrafficStats{}, err
 		}
-		if err := s.baseline.UpdateTrafficStatsCursor(ctx, now, seed.Requests, true); err != nil {
+		if err := s.baseline.UpdateTrafficStatsCursor(ctx, now, seed.Requests, seed.Visitors, true); err != nil {
 			return models.TrafficStats{}, fmt.Errorf("seed traffic baseline: %w", err)
 		}
 		return models.TrafficStats{
 			Range:     trafficRange,
 			Requests:  seed.Requests,
+			Visitors:  seed.Visitors,
 			UpdatedAt: now,
 		}, nil
+	}
+	totalVisitors := cursor.TotalVisitors
+	if totalVisitors == 0 {
+		seed, err := s.queryDaily(ctx, trafficRange, now.AddDate(0, 0, -30), now, true)
+		if err != nil {
+			return models.TrafficStats{}, err
+		}
+		totalVisitors = seed.Visitors
 	}
 	delta, err := s.queryAdaptiveRequests(ctx, cursor.LastCheckedAt, now)
 	if err != nil {
 		return models.TrafficStats{}, err
 	}
 	total := cursor.TotalRequests + delta
-	if err := s.baseline.UpdateTrafficStatsCursor(ctx, now, total, true); err != nil {
+	if err := s.baseline.UpdateTrafficStatsCursor(ctx, now, total, totalVisitors, true); err != nil {
 		return models.TrafficStats{}, fmt.Errorf("update traffic baseline: %w", err)
 	}
 	return models.TrafficStats{
 		Range:     trafficRange,
 		Requests:  total,
+		Visitors:  totalVisitors,
 		UpdatedAt: now,
 	}, nil
 }

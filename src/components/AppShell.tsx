@@ -177,9 +177,7 @@ export function AppShell() {
                   </div>
                 ) : (
                   <>
-                    {trafficRange !== 'total' ? (
-                      <MetricRow label="Visitors" value={traffic.data?.data.visitors} loading={traffic.isLoading} />
-                    ) : null}
+                    <MetricRow label="Visitors" value={traffic.data?.data.visitors} loading={traffic.isLoading} />
                     <MetricRow label="Requests" value={traffic.data?.data.requests} loading={traffic.isLoading} />
                   </>
                 )}
