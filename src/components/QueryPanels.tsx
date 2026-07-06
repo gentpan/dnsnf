@@ -11,11 +11,10 @@ const recordTypes: DnsRecordType[] = ['ALL', 'A', 'AAAA', 'CNAME', 'MX', 'NS', '
 const displayRecordTypes = recordTypes.filter((recordType) => recordType !== 'ALL')
 const recordTypeOptions = recordTypes.map((value) => ({ value, label: value }))
 const resolverOptions: Array<{ value: DnsResolver; label: string }> = [
-  { value: 'cloudflare', label: 'Cloudflare' },
-  { value: 'google', label: 'Google DNS' },
-  { value: 'ali', label: 'Ali DNS' },
+  { value: 'cloudflare', label: 'CF' },
+  { value: 'google', label: 'Google' },
+  { value: 'ali', label: 'Ali' },
   { value: 'authoritative', label: 'Authoritative' },
-  { value: 'local', label: 'Local DNS' },
 ]
 const rdnsModeOptions = [
   { value: 'middle', label: 'Contains' },
@@ -114,19 +113,35 @@ export function LookupPanel({ initialTarget = '' }: { initialTarget?: string }) 
   return (
     <div className="space-y-5">
       <Card className="overflow-hidden">
-        <CardHeader className="flex flex-row items-center justify-between bg-zinc-50/70">
+        <CardHeader className="flex flex-col gap-3 bg-zinc-50/70 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-2 text-sm font-medium">
             <Search className="h-4 w-4 text-sky-600" />
             Query target
           </div>
-          <div className="flex items-center gap-2">
-            <Badge>{resolverOptions.find((option) => option.value === resolver)?.label}</Badge>
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="grid grid-cols-4 gap-1 rounded-lg bg-zinc-100 p-1">
+              {resolverOptions.map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => setResolver(option.value)}
+                  className={[
+                    'h-8 rounded-md px-2 text-xs font-medium transition sm:px-3',
+                    resolver === option.value
+                      ? 'bg-zinc-950 text-white shadow-sm'
+                      : 'text-zinc-500 hover:bg-white hover:text-zinc-950',
+                  ].join(' ')}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
             <Badge>{type}</Badge>
           </div>
         </CardHeader>
         <CardContent>
           <form
-            className="grid gap-3 sm:grid-cols-[1fr_150px_180px_auto]"
+            className="grid gap-3 sm:grid-cols-[1fr_150px_auto]"
             onSubmit={(event) => {
               event.preventDefault()
               setSubmitted(target.trim())
@@ -138,12 +153,6 @@ export function LookupPanel({ initialTarget = '' }: { initialTarget?: string }) 
               onValueChange={(next) => setType(next as DnsRecordType)}
               options={recordTypeOptions}
               ariaLabel="Record type"
-            />
-            <Select
-              value={resolver}
-              onValueChange={(next) => setResolver(next as DnsResolver)}
-              options={resolverOptions}
-              ariaLabel="DNS resolver"
             />
             <Button>
               <Search className="h-4 w-4" />
