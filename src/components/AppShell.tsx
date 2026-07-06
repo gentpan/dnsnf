@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Link, Outlet } from '@tanstack/react-router'
+import { Link, Outlet, useRouterState } from '@tanstack/react-router'
 import {
   Activity,
   BookOpen,
@@ -50,6 +50,9 @@ const trafficStatsRefreshMs = 60 * 60 * 1000
 
 export function AppShell() {
   const [trafficRange, setTrafficRange] = React.useState<TrafficRange>('24h')
+  const isRouteLoading = useRouterState({
+    select: (state) => state.status === 'pending',
+  })
   const health = useQuery({
     queryKey: ['api-health'],
     queryFn: measureApiHealth,
@@ -130,6 +133,8 @@ export function AppShell() {
                 <Link
                   key={item.to}
                   to={item.to}
+                  preload="intent"
+                  preloadDelay={80}
                   title={item.label}
                   className="flex shrink-0 items-center gap-2 rounded-md px-3 py-2 text-sm text-zinc-600 transition hover:bg-zinc-50 hover:text-zinc-950 [&.active]:bg-zinc-950 [&.active]:font-medium [&.active]:text-white [&.active]:shadow-sm"
                 >
@@ -179,12 +184,44 @@ export function AppShell() {
             </CardContent>
           </Card>
         </aside>
-        <main className="min-w-0">
+        <main className="relative min-w-0">
+          <AjaxRouteProgress active={isRouteLoading} />
           <Outlet />
         </main>
       </div>
       <AppFooter />
       <OverlayScrollBar />
+    </div>
+  )
+}
+
+function AjaxRouteProgress({ active }: { active: boolean }) {
+  return (
+    <div
+      aria-hidden="true"
+      className={[
+        'pointer-events-none absolute left-0 right-0 top-0 z-10 h-0.5 overflow-hidden rounded-full bg-transparent transition-opacity duration-150',
+        active ? 'opacity-100' : 'opacity-0',
+      ].join(' ')}
+    >
+      <div className="h-full w-1/2 animate-[dnsnf-route-progress_0.9s_ease-in-out_infinite] rounded-full bg-sky-600" />
+      <style>
+        {`
+          @keyframes dnsnf-route-progress {
+            0% {
+              transform: translateX(-100%) scaleX(0.25);
+            }
+
+            50% {
+              transform: translateX(50%) scaleX(1);
+            }
+
+            100% {
+              transform: translateX(220%) scaleX(0.25);
+            }
+          }
+        `}
+      </style>
     </div>
   )
 }
