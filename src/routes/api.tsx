@@ -381,7 +381,7 @@ function PublicApiPage() {
     <div className="space-y-6">
       <section className="overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-sm shadow-zinc-200/40">
         <div className="border-b border-zinc-100 bg-zinc-950 p-6 text-white">
-          <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+          <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
             <div>
               <div className="mb-3 flex flex-wrap gap-2">
                 <StatusBadge tone="green">Public API</StatusBadge>
@@ -394,12 +394,12 @@ function PublicApiPage() {
                 Query DNS records, reverse IP data, infrastructure relationships, PTR search, and DNSSEC records from {API_BASE}.
               </p>
             </div>
-            <div className="flex flex-wrap gap-2">
-              <Button variant="secondary" size="sm" className="h-9 text-xs" onClick={() => copyText(markdownFor(endpoint, fullUrl, codeExamples.curl))}>
+            <div className="grid grid-cols-2 gap-2 sm:w-auto lg:shrink-0">
+              <Button variant="secondary" size="sm" className="h-9 min-w-24 text-xs" onClick={() => copyText(markdownFor(endpoint, fullUrl, codeExamples.curl))}>
                 <Clipboard className="h-4 w-4" />
                 Copy
               </Button>
-              <Button variant="secondary" size="sm" className="h-9 text-xs" onClick={() => openUrl(fullUrl)}>
+              <Button variant="secondary" size="sm" className="h-9 min-w-24 text-xs" onClick={() => openUrl(fullUrl)}>
                 <ExternalLink className="h-4 w-4" />
                 Open
               </Button>
