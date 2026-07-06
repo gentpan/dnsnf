@@ -1,0 +1,2 @@
+ALTER TABLE traffic_stats_baseline
+  ADD COLUMN IF NOT EXISTS seeded_from_30d BOOLEAN NOT NULL DEFAULT FALSE;

@@ -21,4 +21,5 @@ type TrafficStatsCursor struct {
 	StartedAt     time.Time
 	LastCheckedAt time.Time
 	TotalRequests int64
+	SeededFrom30D bool
 }

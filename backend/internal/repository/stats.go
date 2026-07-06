@@ -25,19 +25,19 @@ func (p *PostgresRepository) GetStatsOverview(ctx context.Context) (models.Stats
 func (p *PostgresRepository) GetTrafficStatsCursor(ctx context.Context) (models.TrafficStatsCursor, error) {
 	var cursor models.TrafficStatsCursor
 	err := p.pool.QueryRow(ctx, `
-		INSERT INTO traffic_stats_baseline (key, started_at, last_checked_at, total_requests)
-		VALUES ('cloudflare_requests_total', NOW(), NOW(), 0)
+		INSERT INTO traffic_stats_baseline (key, started_at, last_checked_at, total_requests, seeded_from_30d)
+		VALUES ('cloudflare_requests_total', NOW(), NOW(), 0, FALSE)
 		ON CONFLICT (key) DO UPDATE SET key = EXCLUDED.key
-		RETURNING started_at, last_checked_at, total_requests
-	`).Scan(&cursor.StartedAt, &cursor.LastCheckedAt, &cursor.TotalRequests)
+		RETURNING started_at, last_checked_at, total_requests, seeded_from_30d
+	`).Scan(&cursor.StartedAt, &cursor.LastCheckedAt, &cursor.TotalRequests, &cursor.SeededFrom30D)
 	return cursor, err
 }
 
-func (p *PostgresRepository) UpdateTrafficStatsCursor(ctx context.Context, checkedAt time.Time, totalRequests int64) error {
+func (p *PostgresRepository) UpdateTrafficStatsCursor(ctx context.Context, checkedAt time.Time, totalRequests int64, seededFrom30D bool) error {
 	_, err := p.pool.Exec(ctx, `
 		UPDATE traffic_stats_baseline
-		SET last_checked_at = $1, total_requests = $2
+		SET last_checked_at = $1, total_requests = $2, seeded_from_30d = $3
 		WHERE key = 'cloudflare_requests_total'
-	`, checkedAt, totalRequests)
+	`, checkedAt, totalRequests, seededFrom30D)
 	return err
 }
