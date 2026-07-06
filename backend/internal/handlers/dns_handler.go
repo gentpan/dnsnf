@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
@@ -22,6 +23,30 @@ func NewDNSHandler(svc *services.Service) *DNSHandler {
 func (h *DNSHandler) Health(w http.ResponseWriter, _ *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{
 		"status":    "ok",
+		"timestamp": time.Now().Unix(),
+	})
+}
+
+func (h *DNSHandler) SystemResolvers(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		writeJSON(w, http.StatusMethodNotAllowed, map[string]any{"code": 405, "message": "method not allowed"})
+		return
+	}
+
+	nameservers := readResolvConfNameservers("/etc/resolv.conf")
+	display := "System resolver"
+	if len(nameservers) > 0 {
+		display = strings.Join(nameservers, " · ")
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"code": 0,
+		"data": map[string]any{
+			"nameservers": nameservers,
+			"display":     display,
+			"source":      "/etc/resolv.conf",
+		},
+		"cached":    false,
 		"timestamp": time.Now().Unix(),
 	})
 }
@@ -67,6 +92,33 @@ func extractClientIP(r *http.Request) string {
 		return r.RemoteAddr
 	}
 	return host
+}
+
+func readResolvConfNameservers(path string) []string {
+	content, err := os.ReadFile(path)
+	if err != nil {
+		return []string{}
+	}
+
+	seen := make(map[string]struct{})
+	nameservers := make([]string, 0, 2)
+	for _, line := range strings.Split(string(content), "\n") {
+		fields := strings.Fields(line)
+		if len(fields) < 2 || fields[0] != "nameserver" {
+			continue
+		}
+
+		value := fields[1]
+		if ip := net.ParseIP(value); ip == nil {
+			continue
+		}
+		if _, ok := seen[value]; ok {
+			continue
+		}
+		seen[value] = struct{}{}
+		nameservers = append(nameservers, value)
+	}
+	return nameservers
 }
 
 func writeError(w http.ResponseWriter, status int, msg string) {

@@ -38,6 +38,7 @@ func NewRouter(
 	v1Mux.HandleFunc("/v1/dns/dnssec", discovery.DNSSEC)
 	v1Mux.HandleFunc("/v1/dns/stats/overview", discovery.StatsOverview)
 	v1Mux.HandleFunc("/v1/dns/stats/traffic", traffic.Stats)
+	v1Mux.HandleFunc("/v1/dns/resolvers/system", dns.SystemResolvers)
 
 	// V2 路由 - 对内，需 Token，无限流
 	v2Mux.HandleFunc("/v2/dns/lookup", dns.LookupDNS)

@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"testing"
 )
 
@@ -73,5 +75,28 @@ func TestExtractClientIP(t *testing.T) {
 				t.Errorf("extractClientIP() = %v, want %v", got, tt.want)
 			}
 		})
+	}
+}
+
+func TestReadResolvConfNameservers(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "resolv.conf")
+	content := []byte(`
+# generated
+nameserver 1.1.1.1
+nameserver 8.8.8.8
+nameserver invalid
+search example.test
+nameserver 1.1.1.1
+`)
+	if err := os.WriteFile(path, content, 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	got := readResolvConfNameservers(path)
+	if len(got) != 2 {
+		t.Fatalf("expected 2 nameservers, got %d: %#v", len(got), got)
+	}
+	if got[0] != "1.1.1.1" || got[1] != "8.8.8.8" {
+		t.Fatalf("unexpected nameservers: %#v", got)
 	}
 }

@@ -79,6 +79,12 @@ export type TrafficStats = {
   updated_at: string
 }
 
+export type SystemResolverInfo = {
+  nameservers: string[]
+  display: string
+  source: string
+}
+
 export type HealthStatus = {
   status?: string
   timestamp?: number
@@ -96,8 +102,8 @@ export type ClientRequestStats = {
   day: string
 }
 
-async function request<T>(path: string, params: Record<string, string | number | undefined> = {}) {
-  recordClientRequest()
+async function request<T>(path: string, params: Record<string, string | number | undefined> = {}, options: { count?: boolean } = {}) {
+  if (options.count !== false) recordClientRequest()
   const url = new URL(`${API_BASE}${path}`, browserOrigin())
   for (const [key, value] of Object.entries(params)) {
     if (value !== undefined && value !== '') url.searchParams.set(key, String(value))
@@ -118,6 +124,7 @@ export const api = {
   health: () => requestRaw<HealthStatus>('/health'),
   stats: () => request<StatsOverview>('/v1/dns/stats/overview'),
   trafficStats: (range: TrafficRange) => request<TrafficStats>('/v1/dns/stats/traffic', { range }),
+  systemResolver: () => request<SystemResolverInfo>('/v1/dns/resolvers/system', {}, { count: false }),
   lookup: (target: string, type: DnsRecordType, resolver: DnsResolver = 'cloudflare') => {
     const isIp = target.includes(':') || /^(\d{1,3}\.){3}\d{1,3}(?:\/\d{1,2})?$/.test(target)
     return request<DnsLookupData>(

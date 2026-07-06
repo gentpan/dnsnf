@@ -117,7 +117,18 @@ export function LookupPanel({ initialTarget = '' }: { initialTarget?: string }) 
   const [submitted, setSubmitted] = React.useState(initialTarget)
   const [type, setType] = React.useState<DnsRecordType>('ALL')
   const [resolver, setResolver] = React.useState<DnsResolver>('cloudflare')
-  const selectedResolver = resolverOptions.find((option) => option.value === resolver) || resolverOptions[1]!
+  const systemResolver = useQuery({
+    queryKey: ['system-resolver'],
+    queryFn: api.systemResolver,
+    staleTime: 60 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    retry: 1,
+  })
+  const localResolverDetail = systemResolver.data?.data.display || 'Server resolver'
+  const lookupResolverOptions = resolverOptions.map((option) =>
+    option.value === 'local' ? { ...option, detail: localResolverDetail } : option,
+  )
+  const selectedResolver = lookupResolverOptions.find((option) => option.value === resolver) || lookupResolverOptions[1]!
   const query = useQuery({
     queryKey: ['lookup', submitted, type, resolver],
     queryFn: () => api.lookup(submitted, type, resolver),
@@ -140,7 +151,7 @@ export function LookupPanel({ initialTarget = '' }: { initialTarget?: string }) 
             </Badge>
           </div>
           <div className="grid grid-cols-2 gap-1 rounded-lg border border-zinc-200 bg-white p-1 shadow-sm shadow-zinc-200/40 sm:grid-cols-5">
-            {resolverOptions.map((option) => (
+            {lookupResolverOptions.map((option) => (
               <ResolverButton
                 key={option.value}
                 label={option.label}
