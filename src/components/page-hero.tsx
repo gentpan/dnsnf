@@ -9,6 +9,7 @@ export function PageHero({
   title,
   body,
   badge,
+  badgeIcon,
   badgeTone = 'zinc',
   eyebrowTone = 'blue',
   variant = 'default',
@@ -21,6 +22,7 @@ export function PageHero({
   title: string
   body: React.ReactNode
   badge?: string
+  badgeIcon?: React.ReactNode
   badgeTone?: HeroTone
   eyebrowTone?: HeroTone
   variant?: 'default' | 'dark'
@@ -50,8 +52,9 @@ export function PageHero({
       <div className={cn('p-5 sm:p-6', isDark ? 'border-b border-white/10' : 'border-b border-zinc-100')}>
         <div className="flex items-start justify-between gap-3">
           <div className={eyebrowClassName}>{eyebrow}</div>
-          {badge ? (
+          {badge || badgeIcon ? (
             <StatusBadge tone={badgeTone} className="w-fit shrink-0 whitespace-nowrap">
+              {badgeIcon}
               {badge}
             </StatusBadge>
           ) : null}

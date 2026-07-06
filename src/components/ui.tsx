@@ -73,7 +73,7 @@ export function StatusBadge({
   return (
     <span
       className={cn(
-        'inline-flex items-center rounded-md border px-2 py-1 text-xs font-medium',
+        'inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-xs font-medium',
         tone === 'zinc' && 'border-zinc-200 bg-zinc-50 text-zinc-700',
         tone === 'green' && 'border-emerald-200 bg-emerald-50 text-emerald-700',
         tone === 'blue' && 'border-sky-200 bg-sky-50 text-sky-700',

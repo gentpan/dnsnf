@@ -1,7 +1,22 @@
 import * as React from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
-import { Check, ChevronLeft, ChevronRight, Clipboard, House, LockKeyhole, Search, XCircle } from 'lucide-react'
+import {
+  Activity,
+  Check,
+  ChevronLeft,
+  ChevronRight,
+  Clipboard,
+  Globe2,
+  House,
+  LockKeyhole,
+  Mail,
+  Network,
+  Route,
+  Search,
+  ShieldCheck,
+  XCircle,
+} from 'lucide-react'
 import { api, type DnsRecordType, type DnsResolver } from '@/lib/api'
 import { getRelatedArticles, type BlogArticle } from '@/lib/blog'
 import { Select } from './base-select'
@@ -34,8 +49,8 @@ const pageSizeOptions = [50, 100, 200, 500].map((value) => ({ value: String(valu
 export function PageTitle({
   title,
   body,
-  eyebrow = 'DNS.NF console',
-  badge = 'Live DNS Query',
+  eyebrow = 'DNS.NF Live Query',
+  badge,
   badgeTone = 'blue',
 }: {
   title: string
@@ -44,9 +59,34 @@ export function PageTitle({
   badge?: string
   badgeTone?: 'zinc' | 'green' | 'blue' | 'amber' | 'red'
 }) {
+  const BadgeIcon = getQueryTitleIcon(title)
+
   return (
-    <PageHero eyebrow={eyebrow} title={title} body={body} badge={badge} badgeTone={badgeTone} />
+    <PageHero
+      eyebrow={eyebrow}
+      title={title}
+      body={body}
+      badge={badge}
+      badgeIcon={BadgeIcon ? <BadgeIcon className="h-3.5 w-3.5" /> : null}
+      badgeTone={badgeTone}
+    />
   )
+}
+
+function getQueryTitleIcon(title: string) {
+  if (title.startsWith('Lookup')) return Search
+
+  const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
+    'DNS Lookup': Search,
+    'Reverse IP': Network,
+    'rDNS Search': Route,
+    'Shared NS': Globe2,
+    'Reverse MX': Mail,
+    Subdomains: Network,
+    DNSSEC: ShieldCheck,
+  }
+
+  return iconMap[title] || Activity
 }
 
 export function UsageGuide({
