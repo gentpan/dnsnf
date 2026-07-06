@@ -116,7 +116,7 @@ export function LookupPanel({ initialTarget = '' }: { initialTarget?: string }) 
   const [target, setTarget] = React.useState(initialTarget)
   const [submitted, setSubmitted] = React.useState(initialTarget)
   const [type, setType] = React.useState<DnsRecordType>('ALL')
-  const [resolver] = React.useState<DnsResolver>('cloudflare')
+  const [resolver, setResolver] = React.useState<DnsResolver>('cloudflare')
   const systemResolver = useQuery({
     queryKey: ['system-resolver'],
     queryFn: api.systemResolver,
@@ -138,7 +138,7 @@ export function LookupPanel({ initialTarget = '' }: { initialTarget?: string }) 
   return (
     <div className="space-y-5">
       <Card className="overflow-hidden">
-        <CardHeader className="bg-zinc-50/70">
+        <CardHeader className="space-y-3 bg-zinc-50/70">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-2 text-sm font-medium">
               <Search className="h-4 w-4 text-sky-600" />
@@ -149,6 +149,19 @@ export function LookupPanel({ initialTarget = '' }: { initialTarget?: string }) 
               <span className="text-zinc-400">/</span>
               <span className="truncate font-mono">{selectedResolver.detail}</span>
             </Badge>
+          </div>
+          <div className="grid grid-cols-2 gap-1 rounded-lg border border-zinc-200 bg-white p-1 shadow-sm shadow-zinc-200/40 sm:grid-cols-5">
+            {lookupResolverOptions.map((option) => (
+              <ResolverButton
+                key={option.value}
+                label={option.label}
+                detail={option.detail}
+                icon={option.icon}
+                logoSrc={option.logoSrc}
+                selected={resolver === option.value}
+                onClick={() => setResolver(option.value)}
+              />
+            ))}
           </div>
         </CardHeader>
         <CardContent>
@@ -177,6 +190,49 @@ export function LookupPanel({ initialTarget = '' }: { initialTarget?: string }) 
       {query.data ? <DnsResult payload={query.data.data} cached={query.data.cached} selectedType={type} /> : null}
       {!query.data && !query.isFetching ? <EmptyState title="Ready for a lookup" body="Enter a domain, IP, or CIDR range." /> : null}
     </div>
+  )
+}
+
+function ResolverButton({
+  label,
+  detail,
+  icon: Icon,
+  logoSrc,
+  selected,
+  onClick,
+}: {
+  label: string
+  detail: string
+  icon?: React.ComponentType<{ className?: string }>
+  logoSrc?: string
+  selected: boolean
+  onClick: () => void
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={[
+        'inline-flex min-h-14 items-center justify-start gap-2 rounded-md px-2.5 py-2 text-left transition sm:px-3',
+        selected
+          ? 'bg-zinc-950 text-white shadow-sm'
+          : 'text-zinc-500 hover:bg-zinc-50 hover:text-zinc-950',
+      ].join(' ')}
+    >
+      {logoSrc ? (
+        <span className="inline-flex h-5 w-5 items-center justify-center">
+          <img src={logoSrc} alt="" className="max-h-[18px] max-w-[18px] object-contain" />
+        </span>
+      ) : Icon ? (
+        <Icon className="h-4 w-4 shrink-0" />
+      ) : null}
+      <span className="min-w-0">
+        <span className="block truncate text-xs font-semibold">{label}</span>
+        <span className={['mt-0.5 block truncate font-mono text-[10px]', selected ? 'text-zinc-300' : 'text-zinc-400'].join(' ')}>
+          {detail}
+        </span>
+      </span>
+    </button>
   )
 }
 
