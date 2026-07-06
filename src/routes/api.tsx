@@ -395,11 +395,11 @@ function PublicApiPage() {
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
-              <Button variant="secondary" onClick={() => copyText(markdownFor(endpoint, fullUrl, codeExamples.curl))}>
+              <Button variant="secondary" size="sm" className="h-9 text-xs" onClick={() => copyText(markdownFor(endpoint, fullUrl, codeExamples.curl))}>
                 <Clipboard className="h-4 w-4" />
-                Copy Markdown
+                Copy
               </Button>
-              <Button variant="secondary" onClick={() => openUrl(fullUrl)}>
+              <Button variant="secondary" size="sm" className="h-9 text-xs" onClick={() => openUrl(fullUrl)}>
                 <ExternalLink className="h-4 w-4" />
                 Open
               </Button>
