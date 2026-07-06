@@ -11,7 +11,7 @@ export type DnsRecordType =
   | 'TXT'
   | 'CAA'
 
-export type DnsResolver = 'cloudflare' | 'google' | 'ali' | 'authoritative' | 'local'
+export type DnsResolver = 'local' | 'cloudflare' | 'google' | 'ali' | 'tencent' | 'authoritative'
 
 export type ApiResponse<T> = {
   code: number

@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
-import { ChevronLeft, ChevronRight, Loader2, LockKeyhole, Search, XCircle } from 'lucide-react'
+import { Building2, ChevronLeft, ChevronRight, Cloud, House, Loader2, LockKeyhole, Search, ShieldCheck, XCircle } from 'lucide-react'
 import { api, type DnsRecordType, type DnsResolver } from '@/lib/api'
 import { getRelatedArticles, type BlogArticle } from '@/lib/blog'
 import { Select } from './base-select'
@@ -10,11 +10,13 @@ import { Badge, Button, Card, CardContent, CardHeader, EmptyState, Input, Status
 const recordTypes: DnsRecordType[] = ['ALL', 'A', 'AAAA', 'CNAME', 'MX', 'NS', 'TXT', 'CAA', 'SOA', 'SRV', 'PTR']
 const displayRecordTypes = recordTypes.filter((recordType) => recordType !== 'ALL')
 const recordTypeOptions = recordTypes.map((value) => ({ value, label: value }))
-const resolverOptions: Array<{ value: DnsResolver; label: string }> = [
-  { value: 'cloudflare', label: 'CF' },
-  { value: 'google', label: 'Google' },
-  { value: 'ali', label: 'Ali' },
-  { value: 'authoritative', label: 'Authoritative' },
+const resolverOptions: Array<{ value: DnsResolver; label: string; icon: React.ComponentType<{ className?: string }> }> = [
+  { value: 'local', label: '本地', icon: House },
+  { value: 'cloudflare', label: 'Cloudflare', icon: Cloud },
+  { value: 'google', label: 'Google', icon: GoogleIcon },
+  { value: 'ali', label: 'Ali', icon: Building2 },
+  { value: 'tencent', label: '腾讯', icon: TencentIcon },
+  { value: 'authoritative', label: 'Auth', icon: ShieldCheck },
 ]
 const rdnsModeOptions = [
   { value: 'middle', label: 'Contains' },
@@ -119,21 +121,15 @@ export function LookupPanel({ initialTarget = '' }: { initialTarget?: string }) 
             Query target
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <div className="grid grid-cols-4 gap-1 rounded-lg bg-zinc-100 p-1">
+            <div className="grid w-full grid-cols-2 gap-1 rounded-lg border border-zinc-200 bg-white p-1 shadow-sm shadow-zinc-200/40 sm:w-auto sm:grid-cols-3 lg:grid-cols-6">
               {resolverOptions.map((option) => (
-                <button
+                <ResolverButton
                   key={option.value}
-                  type="button"
+                  label={option.label}
+                  icon={option.icon}
+                  selected={resolver === option.value}
                   onClick={() => setResolver(option.value)}
-                  className={[
-                    'h-8 rounded-md px-2 text-xs font-medium transition sm:px-3',
-                    resolver === option.value
-                      ? 'bg-zinc-950 text-white shadow-sm'
-                      : 'text-zinc-500 hover:bg-white hover:text-zinc-950',
-                  ].join(' ')}
-                >
-                  {option.label}
-                </button>
+                />
               ))}
             </div>
             <Badge>{type}</Badge>
@@ -165,6 +161,56 @@ export function LookupPanel({ initialTarget = '' }: { initialTarget?: string }) 
       {query.data ? <DnsResult payload={query.data.data} cached={query.data.cached} selectedType={type} /> : null}
       {!query.data && !query.isFetching ? <EmptyState title="Ready for a lookup" body="Enter a domain, IP, or CIDR range." /> : null}
     </div>
+  )
+}
+
+function ResolverButton({
+  label,
+  icon: Icon,
+  selected,
+  onClick,
+}: {
+  label: string
+  icon: React.ComponentType<{ className?: string }>
+  selected: boolean
+  onClick: () => void
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={[
+        'inline-flex h-9 items-center justify-center gap-1.5 rounded-md px-2.5 text-xs font-medium transition sm:px-3',
+        selected
+          ? 'bg-zinc-950 text-white shadow-sm'
+          : 'text-zinc-500 hover:bg-zinc-50 hover:text-zinc-950',
+      ].join(' ')}
+    >
+      <Icon className="h-3.5 w-3.5" />
+      <span>{label}</span>
+    </button>
+  )
+}
+
+function GoogleIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" aria-hidden="true">
+      <path
+        fill="currentColor"
+        d="M21.35 11.1H12v2.9h5.35c-.23 1.42-1.62 4.17-5.35 4.17A6.18 6.18 0 0 1 12 5.8c1.83 0 3.05.78 3.75 1.45l2.55-2.46C16.66 3.27 14.54 2.35 12 2.35a9.65 9.65 0 1 0 0 19.3c5.57 0 9.25-3.92 9.25-9.43 0-.63-.07-1.12-.15-1.12Z"
+      />
+    </svg>
+  )
+}
+
+function TencentIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" aria-hidden="true">
+      <path
+        fill="currentColor"
+        d="M4 4.5h16v3.2h-6.2v11.8h-3.6V7.7H4V4.5Z"
+      />
+    </svg>
   )
 }
 

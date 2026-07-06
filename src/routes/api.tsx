@@ -66,7 +66,7 @@ const endpoints: ApiEndpoint[] = [
     params: [
       { name: 'domain', type: 'string', required: true, defaultValue: 'example.com', description: 'Domain name, IPv4 address, or IPv4 CIDR target.' },
       { name: 'type', type: 'string', defaultValue: 'ALL', description: 'Record type. Use ALL for a complete lookup.' },
-      { name: 'resolver', type: 'string', defaultValue: 'cloudflare', description: 'Resolver: cloudflare, google, ali, authoritative, or local.' },
+      { name: 'resolver', type: 'string', defaultValue: 'cloudflare', description: 'Resolver: local, cloudflare, google, ali, tencent, or authoritative.' },
     ],
   },
   {

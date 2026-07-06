@@ -218,7 +218,7 @@ curl "https://api.dns.nf/v1/dns/lookup?domain=example.com&type=MX&resolver=googl
 curl "https://api.dns.nf/v1/dns/lookup?domain=example.com&type=TXT&resolver=ali"
 ```
 
-`resolver` 支持 `cloudflare`、`google`、`ali`、`authoritative` 和 `local`。默认使用 `cloudflare`。
+`resolver` 支持 `local`、`cloudflare`、`google`、`ali`、`tencent` 和 `authoritative`。默认使用 `cloudflare`。
 
 反向 DNS：
 
@@ -503,7 +503,7 @@ curl "https://api.dns.nf/v1/dns/lookup?domain=example.com&type=MX&resolver=googl
 curl "https://api.dns.nf/v1/dns/lookup?domain=example.com&type=TXT&resolver=ali"
 ```
 
-The `resolver` parameter supports `cloudflare`, `google`, `ali`, `authoritative`, and `local`. The default resolver is `cloudflare`.
+The `resolver` parameter supports `local`, `cloudflare`, `google`, `ali`, `tencent`, and `authoritative`. The default resolver is `cloudflare`.
 
 Reverse DNS:
 

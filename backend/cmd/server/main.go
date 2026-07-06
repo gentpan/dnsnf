@@ -53,6 +53,7 @@ func main() {
 		"cloudflare":    cloudflareResolver,
 		"google":        services.NewNetResolver([]string{"8.8.8.8:53", "8.8.4.4:53"}),
 		"ali":           services.NewNetResolver([]string{"223.5.5.5:53", "223.6.6.6:53"}),
+		"tencent":       services.NewNetResolver([]string{"119.29.29.29:53", "182.254.116.116:53"}),
 		"local":         services.NewSystemResolver(),
 		"authoritative": services.NewAuthoritativeResolver(cloudflareResolver),
 	})
