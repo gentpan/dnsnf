@@ -169,7 +169,9 @@ export function AppShell() {
                   </div>
                 ) : (
                   <>
-                    {trafficRange !== 'total' ? <MetricRow label="Visitors" value={traffic.data?.data.visitors} /> : null}
+                    {trafficRange !== 'total' ? (
+                      <MetricRow label="Visitors" value={traffic.data?.data.visitors} loading={traffic.isLoading} />
+                    ) : null}
                     <MetricRow label="Requests" value={traffic.data?.data.requests} loading={traffic.isLoading} />
                   </>
                 )}
@@ -324,8 +326,39 @@ function MetricRow({ label, value, loading = false }: { label: string; value?: n
     <div className="flex items-center justify-between rounded-md border border-zinc-200 bg-zinc-50 px-3 py-2">
       <span className="text-xs text-zinc-500">{label}</span>
       <span className="font-mono text-sm font-semibold text-zinc-950">
-        {loading || value === undefined ? '-' : value.toLocaleString()}
+        {loading || value === undefined ? <RequestLoadingBar className="h-1 w-10" /> : value.toLocaleString()}
       </span>
     </div>
+  )
+}
+
+function RequestLoadingBar({ className }: { className?: string }) {
+  return (
+    <svg className={className} fill="currentColor" viewBox="0 0 40 4" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <style>
+        {`
+          .dnsnf-request-loading {
+            transform-box: fill-box;
+            transform-origin: left center;
+            animation: dnsnf-request-loading 1s ease-in-out infinite;
+          }
+
+          @keyframes dnsnf-request-loading {
+            0% {
+              transform: translateX(0) scaleX(0);
+            }
+
+            50% {
+              transform: translateX(0) scaleX(1);
+            }
+
+            100% {
+              transform: translateX(40px) scaleX(0);
+            }
+          }
+        `}
+      </style>
+      <rect className="dnsnf-request-loading" width="40" height="4" fill="currentColor" />
+    </svg>
   )
 }
