@@ -70,7 +70,7 @@ export function AppShell() {
   const statusLabel = health.isLoading ? 'Pinging' : isHealthy && latencyMs ? `API ${latencyMs}ms` : 'API Offline'
   const statusTitle =
     isHealthy && latencyMs
-      ? `Local HTTP ping to api.dns.nf: ${latencyMs}ms.`
+      ? `HTTP check to api.dns.nf: ${latencyMs}ms.`
       : health.isLoading
         ? 'Checking local network latency to api.dns.nf.'
         : 'api.dns.nf health check failed.'
@@ -196,8 +196,8 @@ async function measureApiHealth() {
 
 function latencyTone(latencyMs?: number) {
   if (!latencyMs) return 'zinc'
-  if (latencyMs < 300) return 'green'
-  if (latencyMs < 1_000) return 'amber'
+  if (latencyMs < 500) return 'green'
+  if (latencyMs < 1_200) return 'amber'
   return 'red'
 }
 
