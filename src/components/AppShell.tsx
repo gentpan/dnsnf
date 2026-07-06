@@ -196,12 +196,20 @@ export function AppShell() {
 }
 
 function AjaxRouteProgress({ active }: { active: boolean }) {
+  const [mounted, setMounted] = React.useState(false)
+
+  React.useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  const isVisible = mounted && active
+
   return (
     <div
       aria-hidden="true"
       className={[
         'pointer-events-none absolute left-0 right-0 top-0 z-10 h-0.5 overflow-hidden rounded-full bg-transparent transition-opacity duration-150',
-        active ? 'opacity-100' : 'opacity-0',
+        isVisible ? 'opacity-100' : 'opacity-0',
       ].join(' ')}
     >
       <div className="h-full w-1/2 animate-[dnsnf-route-progress_0.9s_ease-in-out_infinite] rounded-full bg-sky-600" />
