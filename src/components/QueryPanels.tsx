@@ -29,7 +29,7 @@ export function PageTitle({
   title,
   body,
   eyebrow = 'DNS.NF console',
-  badge = 'Live query',
+  badge = 'Live DNS Query',
   badgeTone = 'blue',
 }: {
   title: string
