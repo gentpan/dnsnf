@@ -52,11 +52,22 @@ export function PageHero({
       <div className={cn('p-5 sm:p-6', isDark ? 'border-b border-white/10' : 'border-b border-zinc-100')}>
         <div className="flex items-start justify-between gap-3">
           <div className={eyebrowClassName}>{eyebrow}</div>
-          {badge || badgeIcon ? (
+          {badge ? (
             <StatusBadge tone={badgeTone} className="w-fit shrink-0 whitespace-nowrap">
               {badgeIcon}
               {badge}
             </StatusBadge>
+          ) : badgeIcon ? (
+            <span
+              className={cn(
+                'pointer-events-none -mt-2 shrink-0 opacity-10',
+                isDark ? 'text-white' : 'text-zinc-950',
+                '[&_svg]:h-12 [&_svg]:w-12',
+              )}
+              aria-hidden="true"
+            >
+              {badgeIcon}
+            </span>
           ) : null}
         </div>
         <div className="mt-3 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
