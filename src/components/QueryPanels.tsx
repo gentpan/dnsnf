@@ -210,7 +210,7 @@ function ResolverButton({
       type="button"
       onClick={onClick}
       className={[
-        'inline-flex h-14 items-center justify-center gap-2 rounded-md px-2.5 py-2 text-center transition sm:px-3',
+        'inline-flex h-11 items-center justify-center gap-2 rounded-md px-2.5 text-center transition sm:px-3',
         selected
           ? 'bg-zinc-950 text-white shadow-sm'
           : 'text-zinc-500 hover:bg-zinc-50 hover:text-zinc-950',
