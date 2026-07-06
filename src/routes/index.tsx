@@ -5,16 +5,18 @@ import { seoMeta } from '@/lib/seo'
 export const Route = createFileRoute('/')({
   head: () => ({
     meta: seoMeta({
-      title: 'DNS.NF - Check DNS Records and Nameservers Online',
+      title: 'DNS.NF - DNS Lookup Tool, DNS Checker and Nameserver Lookup',
       description:
-        'Check DNS records and nameservers online with DNS.NF. Query A, AAAA, CNAME, MX, NS, TXT, SOA, CAA, SRV, PTR, reverse DNS, reverse IP, subdomains, and DNSSEC from one fast DNS toolkit.',
+        'Use DNS.NF as a fast DNS lookup tool and DNS checker. Check A, AAAA, CNAME, MX, NS, TXT, SOA, CAA, PTR, nameservers, DNS propagation, reverse DNS, reverse IP, subdomains, and DNSSEC.',
       keywords: [
+        'DNS lookup tool',
+        'DNS checker online',
+        'DNS propagation checker',
+        'DNS record lookup',
         'Check DNS records',
         'check nameservers',
         'nameserver lookup',
         'DNS records checker',
-        'DNS lookup tool',
-        'DNS checker online',
         'DNS.NF',
         '查询DNS记录',
         '域名NS查询',

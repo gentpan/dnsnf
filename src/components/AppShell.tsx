@@ -104,7 +104,7 @@ export function AppShell() {
             />
             <div>
               <div className="font-semibold tracking-normal">DNS.NF</div>
-              <div className="text-xs text-zinc-500">DNS intelligence toolkit</div>
+              <div className="text-xs text-zinc-500">DNS lookup tools</div>
             </div>
           </Link>
           <div className="flex items-center gap-2">

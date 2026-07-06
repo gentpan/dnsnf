@@ -1,7 +1,7 @@
 {
   "name": "dnsnf-web",
   "private": true,
-  "description": "DNS.NF is a TanStack Start and Go powered DNS intelligence platform for DNS lookup, reverse DNS, reverse IP, subdomain discovery, DNSSEC, and a public DNS API.",
+  "description": "DNS.NF is a fast DNS lookup tool and DNS checker for DNS records, nameservers, reverse DNS, reverse IP, subdomain discovery, DNSSEC, and a public DNS API.",
   "homepage": "https://dns.nf",
   "repository": {
     "type": "git",
@@ -10,8 +10,14 @@
   "keywords": [
     "dns",
     "dns-lookup",
+    "dns-lookup-tool",
+    "dns-checker",
+    "dns-record-lookup",
+    "dns-propagation",
+    "nameserver-lookup",
     "reverse-dns",
     "reverse-ip",
+    "subdomain-finder",
     "subdomain-discovery",
     "dnssec",
     "tanstack-start",

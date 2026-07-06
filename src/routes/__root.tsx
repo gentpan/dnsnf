@@ -12,7 +12,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       {
         name: 'description',
         content:
-          'Check DNS records and nameservers with DNS.NF. Run DNS lookup, NS lookup, MX lookup, TXT lookup, reverse DNS, reverse IP, subdomain discovery, DNSSEC checks, and public DNS API queries.',
+          'DNS.NF is a fast DNS lookup tool and DNS checker for DNS records, nameservers, DNS propagation, reverse DNS, reverse IP, subdomains, DNSSEC, and public DNS API queries.',
       },
       {
         name: 'keywords',
@@ -21,7 +21,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: 'theme-color', content: '#09090b' },
       { name: 'msapplication-TileColor', content: '#09090b' },
       { name: 'msapplication-config', content: '/browserconfig.xml' },
-      { title: 'DNS.NF - Check DNS Records and Nameservers Online' },
+      { title: 'DNS.NF - DNS Lookup Tool, DNS Checker and Nameserver Lookup' },
     ],
     links: [
       { rel: 'stylesheet', href: appCss },
