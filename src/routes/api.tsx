@@ -63,7 +63,6 @@ const endpoints: ApiEndpoint[] = [
     params: [
       { name: 'domain', type: 'string', required: true, defaultValue: 'example.com', description: 'Domain name, IPv4 address, or IPv4 CIDR target. The API also accepts ip as an alias.' },
       { name: 'type', type: 'string', defaultValue: 'ALL', description: 'Record type: ALL, A, AAAA, CNAME, MX, NS, TXT, SOA, CAA, SRV, or PTR.' },
-      { name: 'resolver', type: 'string', defaultValue: 'cloudflare', description: 'Resolver: local, cloudflare, google, ali, or tencent. local uses the api.dns.nf server system resolver.' },
     ],
     response: `{
   "code": 0,
@@ -77,7 +76,7 @@ const endpoints: ApiEndpoint[] = [
   "cached": false,
   "timestamp": 1783340000
 }`,
-    notes: ['Use resolver=cloudflare for the default public resolver behavior.', 'Use type=ALL when you want the normalized record set shown in the DNS.NF console.'],
+    notes: ['Use type=ALL when you want the normalized record set shown in the DNS.NF console.', 'Public API examples use DNS.NF defaults and do not require provider selection.'],
   },
   {
     method: 'GET',
@@ -196,11 +195,11 @@ const endpoints: ApiEndpoint[] = [
     path: '/v1/dns/dnssec',
     title: 'DNSSEC',
     description: 'Inspect DS, DNSKEY, RRSIG, and NSEC records with a simple security score.',
-    params: [{ name: 'domain', type: 'string', required: true, defaultValue: 'cloudflare.com', description: 'Domain to inspect.' }],
+    params: [{ name: 'domain', type: 'string', required: true, defaultValue: 'example.com', description: 'Domain to inspect.' }],
     response: `{
   "code": 0,
   "data": {
-    "domain": "cloudflare.com",
+    "domain": "example.com",
     "score": 100,
     "status": "strong",
     "records": {
@@ -217,13 +216,13 @@ const endpoints: ApiEndpoint[] = [
     title: 'DNS History',
     description: 'Read passive DNS history records stored by DNS.NF.',
     params: [
-      { name: 'domain', type: 'string', required: true, defaultValue: 'cloudflare.com', description: 'Domain to search.' },
+      { name: 'domain', type: 'string', required: true, defaultValue: 'example.com', description: 'Domain to search.' },
       { name: 'limit', type: 'integer', defaultValue: '500', description: 'Maximum number of records. Maximum accepted value is 2000.' },
     ],
     response: `{
   "code": 0,
   "data": {
-    "domain": "cloudflare.com",
+    "domain": "example.com",
     "total": 1,
     "records": [
       { "type": "A", "value": "104.16.132.229", "source": "local" }
