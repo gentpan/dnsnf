@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
-import { Building2, ChevronLeft, ChevronRight, Cloud, House, Loader2, LockKeyhole, Search, XCircle } from 'lucide-react'
+import { ChevronLeft, ChevronRight, House, Loader2, LockKeyhole, Search, XCircle } from 'lucide-react'
 import { api, type DnsRecordType, type DnsResolver } from '@/lib/api'
 import { getRelatedArticles, type BlogArticle } from '@/lib/blog'
 import { Select } from './base-select'
@@ -10,12 +10,12 @@ import { Badge, Button, Card, CardContent, CardHeader, EmptyState, Input, Status
 const recordTypes: DnsRecordType[] = ['ALL', 'A', 'AAAA', 'CNAME', 'MX', 'NS', 'TXT', 'CAA', 'SOA', 'SRV', 'PTR']
 const displayRecordTypes = recordTypes.filter((recordType) => recordType !== 'ALL')
 const recordTypeOptions = recordTypes.map((value) => ({ value, label: value }))
-const resolverOptions: Array<{ value: DnsResolver; label: string; icon: React.ComponentType<{ className?: string }> }> = [
+const resolverOptions: Array<{ value: DnsResolver; label: string; icon?: React.ComponentType<{ className?: string }>; logoSrc?: string }> = [
   { value: 'local', label: '本地', icon: House },
-  { value: 'cloudflare', label: 'Cloudflare', icon: Cloud },
-  { value: 'google', label: 'Google', icon: GoogleIcon },
-  { value: 'ali', label: 'Ali', icon: Building2 },
-  { value: 'tencent', label: '腾讯', icon: TencentIcon },
+  { value: 'cloudflare', label: 'Cloudflare', logoSrc: '/resolver-icons/cloudflare.svg' },
+  { value: 'google', label: 'Google', logoSrc: '/resolver-icons/google.svg' },
+  { value: 'ali', label: 'Ali', logoSrc: '/resolver-icons/alibabacloud.svg' },
+  { value: 'tencent', label: '腾讯', logoSrc: '/resolver-icons/tencentcloud.svg' },
 ]
 const rdnsModeOptions = [
   { value: 'middle', label: 'Contains' },
@@ -126,6 +126,7 @@ export function LookupPanel({ initialTarget = '' }: { initialTarget?: string }) 
                   key={option.value}
                   label={option.label}
                   icon={option.icon}
+                  logoSrc={option.logoSrc}
                   selected={resolver === option.value}
                   onClick={() => setResolver(option.value)}
                 />
@@ -166,11 +167,13 @@ export function LookupPanel({ initialTarget = '' }: { initialTarget?: string }) 
 function ResolverButton({
   label,
   icon: Icon,
+  logoSrc,
   selected,
   onClick,
 }: {
   label: string
-  icon: React.ComponentType<{ className?: string }>
+  icon?: React.ComponentType<{ className?: string }>
+  logoSrc?: string
   selected: boolean
   onClick: () => void
 }) {
@@ -185,31 +188,15 @@ function ResolverButton({
           : 'text-zinc-500 hover:bg-zinc-50 hover:text-zinc-950',
       ].join(' ')}
     >
-      <Icon className="h-3.5 w-3.5" />
+      {logoSrc ? (
+        <span className="inline-flex h-5 w-5 items-center justify-center rounded bg-white">
+          <img src={logoSrc} alt="" className="max-h-4 max-w-4 object-contain" />
+        </span>
+      ) : Icon ? (
+        <Icon className="h-3.5 w-3.5" />
+      ) : null}
       <span>{label}</span>
     </button>
-  )
-}
-
-function GoogleIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" aria-hidden="true">
-      <path
-        fill="currentColor"
-        d="M21.35 11.1H12v2.9h5.35c-.23 1.42-1.62 4.17-5.35 4.17A6.18 6.18 0 0 1 12 5.8c1.83 0 3.05.78 3.75 1.45l2.55-2.46C16.66 3.27 14.54 2.35 12 2.35a9.65 9.65 0 1 0 0 19.3c5.57 0 9.25-3.92 9.25-9.43 0-.63-.07-1.12-.15-1.12Z"
-      />
-    </svg>
-  )
-}
-
-function TencentIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" aria-hidden="true">
-      <path
-        fill="currentColor"
-        d="M4 4.5h16v3.2h-6.2v11.8h-3.6V7.7H4V4.5Z"
-      />
-    </svg>
   )
 }
 
