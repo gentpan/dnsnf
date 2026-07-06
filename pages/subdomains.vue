@@ -223,7 +223,7 @@ useSeoMeta({
   display: inline-flex;
   align-items: center;
   gap: 9px;
-  color: #212529;
+  color: #1E293B;
   font-weight: 800;
 }
 .subdomain-form-row {
@@ -239,13 +239,13 @@ useSeoMeta({
   border-radius: 0;
   padding: 0 12px;
   font-size: 16px;
-  color: #212529;
+  color: #1E293B;
   background: #fff;
 }
 .subdomain-input:focus {
   outline: none;
   border-color: var(--app-accent);
-  box-shadow: 0 0 0 2px rgba(114, 191, 128, 0.15);
+  box-shadow: 0 0 0 2px rgba(76, 154, 255, 0.15);
 }
 .subdomain-btn {
   border: 1px solid transparent;
@@ -270,7 +270,7 @@ useSeoMeta({
 }
 .subdomain-hint {
   margin: 6px 0 8px;
-  color: #6C757D;
+  color: #64748B;
   font-size: 13px;
 }
 .subdomain-alert {
@@ -298,13 +298,13 @@ useSeoMeta({
   border-right: 0;
 }
 .record-name {
-  color: #6C757D;
+  color: #64748B;
   font-size: 12px;
   font-weight: 600;
   text-transform: uppercase;
 }
 .record-count {
-  color: #212529;
+  color: #1E293B;
   font-size: 18px;
   font-weight: 700;
 }
@@ -326,7 +326,7 @@ useSeoMeta({
   border: 1px solid var(--query-line);
   border-radius: 0;
   background: #ffffff;
-  color: #6C757D;
+  color: #64748B;
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -350,11 +350,11 @@ useSeoMeta({
   padding: 10px;
   text-align: left;
   vertical-align: top;
-  color: #212529;
+  color: #1E293B;
   word-break: break-word;
 }
 .subdomain-table th {
-  background: #F8F9FA;
+  background: #F8FAFC;
   font-weight: 700;
 }
 .ta-r { text-align: right; }
@@ -378,7 +378,7 @@ useSeoMeta({
   border-radius: 0;
   background: #f8f9fa;
   padding: 2px 6px;
-  color: #6C757D;
+  color: #64748B;
   font-size: 12px;
 }
 .muted { color: #6C757D; }

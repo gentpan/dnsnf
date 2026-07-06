@@ -1,36 +1,51 @@
 {
-  "name": "dns-frontend",
+  "name": "dnsnf-web",
   "private": true,
   "type": "module",
+  "imports": {
+    "#/*": "./src/*",
+    "@/*": "./src/*"
+  },
   "engines": {
-    "node": ">=20 <25"
+    "node": ">=22"
   },
   "scripts": {
-    "predev": "node scripts/check-node.mjs",
-    "prebuild": "node scripts/check-node.mjs",
-    "prestart": "node scripts/check-node.mjs",
-    "dev": "node scripts/dev-single.mjs",
-    "build": "node ./node_modules/nuxt/bin/nuxt.mjs build",
-    "start": "node .output/server/index.mjs",
-    "preview:local": "node ./node_modules/nuxt/bin/nuxt.mjs start --host 127.0.0.1 --port 3100"
+    "dev": "vite dev --host 127.0.0.1 --port 3000",
+    "generate-routes": "tsr generate",
+    "build": "vite build",
+    "preview": "vite preview --host 127.0.0.1 --port 3000",
+    "test": "tsc --noEmit"
   },
   "dependencies": {
-    "@element-plus/nuxt": "^1.1.5",
-    "@fontsource/poppins": "^5.2.7",
-    "@nuxt/image": "^2.0.0",
-    "@pinia/nuxt": "^0.11.3",
-    "axios": "^1.12.2",
-    "element-plus": "^2.11.4",
-    "nuxt": "^4.4.2",
-    "pinia": "^3.0.3",
-    "vue": "^3.5.31"
+    "@base-ui/react": "^1.6.0",
+    "@tailwindcss/vite": "^4.1.18",
+    "@tanstack/react-query": "^5.90.12",
+    "@tanstack/react-router": "^1.132.0",
+    "@tanstack/react-router-ssr-query": "^1.132.0",
+    "@tanstack/react-start": "^1.132.0",
+    "@tanstack/router-plugin": "^1.132.0",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "lucide-react": "^0.545.0",
+    "nitro": "npm:nitro-nightly@latest",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "tailwind-merge": "^3.4.0",
+    "tailwindcss": "^4.1.18"
   },
   "devDependencies": {
-    "@types/node": "^22.15.2",
-    "typescript": "^5.9.3",
-    "vue-tsc": "^3.2.4"
+    "@tanstack/router-cli": "^1.132.0",
+    "@types/node": "^22.10.2",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "@vitejs/plugin-react": "^6.0.1",
+    "typescript": "^6.0.2",
+    "vite": "^8.0.0"
   },
-  "overrides": {
-    "ofetch": "^1.5.1"
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "lightningcss"
+    ]
   }
 }

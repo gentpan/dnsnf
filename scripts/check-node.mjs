@@ -1,7 +1,7 @@
 const version = process.versions.node
 const major = Number(version.split('.')[0] || 0)
 
-if (major < 20 || major >= 25) {
+if (major < 20) {
   console.error('[DNS.NF] Node.js 版本不兼容。')
   console.error(`[DNS.NF] 当前版本: v${version}`)
   console.error('[DNS.NF] 需要版本: >=20 且 <25 (推荐 22/24)')

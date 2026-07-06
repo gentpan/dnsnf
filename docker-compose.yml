@@ -1,0 +1,71 @@
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE: ${VITE_API_BASE:-http://localhost:8080}
+    container_name: dnsnf-web
+    restart: unless-stopped
+    ports:
+      - "${WEB_PORT:-3000}:3000"
+    depends_on:
+      - api
+    networks:
+      - dnsnf
+
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: dnsnf-api
+    restart: unless-stopped
+    ports:
+      - "${API_PORT:-8080}:8080"
+    environment:
+      APP_ENV: production
+      PORT: 8080
+      POSTGRES_DSN: postgres://postgres:${DB_PASSWORD:-postgres}@postgres:5432/dns_platform?sslmode=disable
+      REDIS_ADDR: redis:6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-redis}
+      REDIS_DB: 0
+      DNS_UPSTREAM: ${DNS_UPSTREAM:-1.1.1.1:53}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:3000,http://127.0.0.1:3000}
+      INTERNAL_TOKEN: ${INTERNAL_TOKEN:-change-me}
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - dnsnf
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: dnsnf-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+      POSTGRES_DB: dns_platform
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backend/migrations:/docker-entrypoint-initdb.d:ro
+    networks:
+      - dnsnf
+
+  redis:
+    image: redis:7-alpine
+    container_name: dnsnf-redis
+    restart: unless-stopped
+    command: redis-server --requirepass ${REDIS_PASSWORD:-redis}
+    volumes:
+      - redis_data:/data
+    networks:
+      - dnsnf
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  dnsnf:
+    driver: bridge

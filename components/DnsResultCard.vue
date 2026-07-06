@@ -399,7 +399,7 @@ const downloadRawJson = () => {
   font-size: 22px;
   line-height: 1.1;
   font-weight: 700;
-  color: #6C757D;
+  color: #64748B;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -441,15 +441,15 @@ const downloadRawJson = () => {
 }
 
 .head-badge-cached {
-  border: 1px solid rgba(114, 191, 128, 0.45);
-  background: rgba(114, 191, 128, 0.12);
-  color: #278451;
+  border: 1px solid rgba(76, 154, 255, 0.45);
+  background: rgba(76, 154, 255, 0.12);
+  color: #1D4ED8;
 }
 
 .head-badge-time {
   border: 1px solid var(--panel-border);
-  background: #f2f4f7;
-  color: #6C757D;
+  background: #F1F5F9;
+  color: #64748B;
 }
 
 .result-meta-title {
@@ -462,7 +462,7 @@ const downloadRawJson = () => {
 }
 
 .result-meta-value {
-  color: #212529;
+  color: #1E293B;
   font-size: 16px;
   font-weight: 500;
   margin-top: 10px;
@@ -474,8 +474,8 @@ const downloadRawJson = () => {
   min-height: 26px;
   padding: 0 10px;
   border: 1px solid var(--panel-border);
-  background: #f2f4f7;
-  color: #6C757D;
+  background: #F1F5F9;
+  color: #64748B;
   font-size: 12px;
   font-weight: 600;
   line-height: 1;
@@ -506,13 +506,13 @@ const downloadRawJson = () => {
 }
 
 .result-row span {
-  color: #212529;
+  color: #1E293B;
   font-size: 13px;
   font-weight: 500;
 }
 
 .result-row strong {
-  color: #212529;
+  color: #1E293B;
   font-size: 13px;
   font-weight: 500;
   text-align: right;
@@ -531,9 +531,9 @@ const downloadRawJson = () => {
   height: 34px;
   min-width: 90px;
   border-radius: 999px;
-  border: 1px solid rgba(114, 191, 128, 0.45);
-  background: rgba(114, 191, 128, 0.12);
-  color: #278451;
+  border: 1px solid rgba(76, 154, 255, 0.45);
+  background: rgba(76, 154, 255, 0.12);
+  color: #1D4ED8;
   text-transform: lowercase;
   font-size: 12px;
   font-weight: 700;
@@ -548,7 +548,7 @@ const downloadRawJson = () => {
   margin-top: 16px;
   background: #ffffff;
   padding: 10px 12px;
-  color: #212529;
+  color: #1E293B;
   font-size: 12px;
   font-weight: 500;
 }
@@ -572,11 +572,11 @@ const downloadRawJson = () => {
   overflow: hidden;
   text-overflow: ellipsis;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-  background: #f4f6fa;
+  background: #F1F5F9;
   border: 1px solid var(--panel-border);
   border-radius: 0;
   padding: 6px 8px;
-  color: #212529;
+  color: #1E293B;
   cursor: pointer;
 }
 
@@ -584,7 +584,7 @@ const downloadRawJson = () => {
   margin-top: 10px;
   border: 1px solid var(--panel-border);
   border-radius: 10px;
-  background: #fbfcfe;
+  background: #F8FAFC;
   overflow: visible;
   position: relative;
   padding-top: 42px;
@@ -604,7 +604,7 @@ const downloadRawJson = () => {
   padding: 10px 14px 14px;
   font-size: 13px;
   line-height: 1.5;
-  color: #2d3748;
+  color: #334155;
   white-space: pre;
   overflow: auto;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
@@ -612,7 +612,7 @@ const downloadRawJson = () => {
 
 .raw-json-code :deep(.json-key),
 .raw-json-code .json-key {
-  color: #0f766e;
+  color: #2563EB;
 }
 
 .raw-json-code :deep(.json-string),
@@ -627,7 +627,7 @@ const downloadRawJson = () => {
 
 .raw-json-code :deep(.json-boolean),
 .raw-json-code .json-boolean {
-  color: #1d4ed8;
+  color: #7C3AED;
 }
 
 
@@ -666,7 +666,7 @@ const downloadRawJson = () => {
   border-radius: 999px;
   border: 1px solid var(--panel-border);
   background: #ffffff;
-  color: #6C757D;
+  color: #64748B;
   font-size: 11px;
   line-height: 22px;
   text-align: center;
@@ -693,14 +693,14 @@ const downloadRawJson = () => {
 }
 
 .reverse-head {
-  color: #6C757D;
+  color: #64748B;
   font-size: 11px;
   font-weight: 700;
   padding: 0 6px;
 }
 
 .reverse-row {
-  color: #212529;
+  color: #1E293B;
   border: 1px solid var(--panel-border);
   background: #ffffff;
   border-radius: 10px;
@@ -710,7 +710,7 @@ const downloadRawJson = () => {
 }
 
 .reverse-ip {
-  color: #4c5f7f;
+  color: #3B82F6;
   font-weight: 600;
 }
 
@@ -724,7 +724,7 @@ const downloadRawJson = () => {
   align-items: center;
   justify-content: space-between;
   gap: 10px;
-  color: #212529;
+  color: #1E293B;
   border: 1px solid var(--panel-border);
   background: #ffffff;
   border-radius: 10px;
@@ -755,7 +755,7 @@ const downloadRawJson = () => {
 .value-text {
   display: block;
   word-break: break-all;
-  color: #212529;
+  color: #1E293B;
 }
 
 .value-text-row {
@@ -768,9 +768,9 @@ const downloadRawJson = () => {
 
 .group-toggle-btn {
   margin-top: 8px;
-  border: 1px solid #d0d8e6;
-  background: #f7f9fc;
-  color: #4a5870;
+  border: 1px solid #CBD5E1;
+  background: #F1F5F9;
+  color: #475569;
   border-radius: 8px;
   height: 32px;
   padding: 0 12px;
@@ -780,7 +780,7 @@ const downloadRawJson = () => {
 }
 
 .group-toggle-btn:hover {
-  background: #eef3f9;
+  background: #E2E8F0;
 }
 
 .value-note {
@@ -822,24 +822,24 @@ const downloadRawJson = () => {
 .icon-only-btn:hover {
   color: var(--app-accent);
   border-color: var(--app-accent);
-  background: #f4fbf6;
+  background: #EFF6FF;
 }
 
 .icon-only-btn:focus-visible {
-  outline: 2px solid rgba(114, 191, 128, 0.28);
+  outline: 2px solid rgba(76, 154, 255, 0.28);
   outline-offset: 1px;
 }
 
 :global(html[data-theme="dark"]) .icon-only-btn {
   border-color: var(--panel-border);
-  background: #1a1a1a;
-  color: #EBEBEB;
+  background: #111827;
+  color: #E2E8F0;
 }
 
 :global(html[data-theme="dark"]) .icon-only-btn:hover {
   color: var(--app-accent);
   border-color: var(--app-accent);
-  background: #151515;
+  background: #0D1320;
 }
 
 .record-grid {
@@ -872,11 +872,11 @@ const downloadRawJson = () => {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: #212529;
+  color: #1E293B;
   font-size: 11px;
   font-weight: 700;
   line-height: 1;
-  background: #f2f5fa;
+  background: #F1F5F9;
   border-bottom: 1px solid var(--panel-border);
 }
 
@@ -886,7 +886,7 @@ const downloadRawJson = () => {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: #212529;
+  color: #1E293B;
   font-size: 14px;
   font-weight: 700;
   line-height: 1;

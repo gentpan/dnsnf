@@ -3,8 +3,8 @@ package handlers
 import (
 	"net/http"
 
-	"giantaccel/internal/middleware"
 	"giantaccel/docs"
+	"giantaccel/internal/middleware"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
@@ -12,12 +12,14 @@ func NewRouter(
 	dns *DNSHandler,
 	history *DnsHistoryHandler,
 	rdns *RdnsRecordHandler,
+	discovery *DiscoveryHandler,
 	loggerMW *middleware.RequestLogger,
 	v1Limiter *middleware.RateLimiter,
 	recoverer *middleware.Recovery,
 	cors *middleware.CORS,
 	metrics *middleware.Metrics,
 	v2TokenAuth *middleware.TokenAuth,
+	analyticsReporter *middleware.AnalyticsReporter,
 ) http.Handler {
 	// 创建子路由处理器
 	v1Mux := http.NewServeMux()
@@ -28,6 +30,12 @@ func NewRouter(
 	v1Mux.HandleFunc("/v1/dns/lookup", dns.LookupDNS)
 	v1Mux.HandleFunc("/v1/dns/history", history.Get)
 	v1Mux.HandleFunc("/v1/dns/rdns", rdns.Search)
+	v1Mux.HandleFunc("/v1/dns/reverse-ip", discovery.ReverseIP)
+	v1Mux.HandleFunc("/v1/dns/subdomains", discovery.Subdomains)
+	v1Mux.HandleFunc("/v1/dns/reverse-ns", discovery.ReverseNS)
+	v1Mux.HandleFunc("/v1/dns/reverse-mx", discovery.ReverseMX)
+	v1Mux.HandleFunc("/v1/dns/dnssec", discovery.DNSSEC)
+	v1Mux.HandleFunc("/v1/dns/stats/overview", discovery.StatsOverview)
 
 	// V2 路由 - 对内，需 Token，无限流
 	v2Mux.HandleFunc("/v2/dns/lookup", dns.LookupDNS)
@@ -64,6 +72,7 @@ func NewRouter(
 	// V1 路由 + 限流
 	var v1Handler http.Handler = v1Mux
 	v1Handler = v1Limiter.Handle(v1Handler)
+	v1Handler = analyticsReporter.Handle(v1Handler)
 	mainMux.Handle("/v1/", v1Handler)
 
 	// V2 路由 + Token 认证（无限流）

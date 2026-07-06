@@ -16,5 +16,5 @@ dist/
 .nuxt/
 .nitro/
 .cache/
+.data/
 *.local
-pnpm-lock.yaml

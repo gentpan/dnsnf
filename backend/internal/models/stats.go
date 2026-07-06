@@ -1,0 +1,11 @@
+package models
+
+import "time"
+
+type StatsOverview struct {
+	QueryProjects int       `json:"query_projects"`
+	TodayRequests int64     `json:"today_requests"`
+	TotalQueries  int64     `json:"total_queries"`
+	TodayVisitors int64     `json:"today_visitors"`
+	UpdatedAt     time.Time `json:"updated_at"`
+}

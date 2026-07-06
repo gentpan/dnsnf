@@ -55,10 +55,10 @@ const submitSubdomains = async () => {
 useSeoMeta({
   title: "DNS.NF - DNS Lookup, rDNS, Reverse IP/NS/MX, Subdomains & DNSSEC",
   description:
-    "DNS.NF provides DNS lookup, rDNS CIDR scanning, reverse IP/NS/MX discovery, subdomain search, DNSSEC checks, and DNS history APIs.",
+    "DNS.NF provides DNS lookup, rDNS CIDR scanning, reverse IP/NS/MX discovery, subdomain search, DNSSEC checks, and free public DNS history APIs.",
   ogTitle: "DNS.NF - DNS Lookup, rDNS, Reverse IP/NS/MX, Subdomains & DNSSEC",
   ogDescription:
-    "Fast DNS tools with structured output: standard records, rDNS scanner, reverse datasets, DNSSEC validation, and API token quota control.",
+    "Fast DNS tools with structured output: standard records, rDNS scanner, reverse datasets, DNSSEC validation, and free public API access.",
   twitterTitle: "DNS.NF - DNS Lookup, rDNS, Reverse IP/NS/MX, Subdomains & DNSSEC",
   twitterDescription:
     "Query domains and IPs with DNS lookup, rDNS, reverse IP/NS/MX, subdomains, DNSSEC, and DNS history in one workspace."
@@ -126,7 +126,7 @@ useSeoMeta({
       <div class="hero-footer hero-notes">
         <span><i class="fa-solid fa-square" aria-hidden="true"></i> DNS + reverse datasets in one workflow</span>
         <span><i class="fa-solid fa-square" aria-hidden="true"></i> Structured cards, hint scoring, and query filters</span>
-        <span><i class="fa-solid fa-square" aria-hidden="true"></i> JSON output, export actions, and token-aware API access</span>
+        <span><i class="fa-solid fa-square" aria-hidden="true"></i> JSON output, export actions, and free public API access</span>
       </div>
     </div>
 
@@ -305,9 +305,9 @@ useSeoMeta({
   align-items: start;
   position: relative;
   overflow: hidden;
-  border: 1px solid #A3CFBB;
+  border: 1px solid #93C5FD;
   border-radius: 0;
-  background: linear-gradient(180deg, #D1E7DD 0%, #C7E0D3 100%);
+  background: linear-gradient(180deg, #DBEAFE 0%, #BFDBFE 100%);
   padding: 24px 22px;
 }
 
@@ -346,7 +346,7 @@ useSeoMeta({
   line-height: 1;
   font-weight: 700;
   letter-spacing: 0.2px;
-  color: #0A3622;
+  color: #1E3A5F;
 }
 
 .hero-title-main {
@@ -358,7 +358,7 @@ useSeoMeta({
   font-size: 16px;
   line-height: 1.2;
   font-weight: 400;
-  color: #0A3622;
+  color: #1E3A5F;
 }
 
 .hero-icon {
@@ -368,7 +368,7 @@ useSeoMeta({
   min-height: 40px;
   flex: 0 0 auto;
   display: block;
-  color: #0A3622;
+  color: #1E3A5F;
 }
 
 .hero-icon path {
@@ -378,7 +378,7 @@ useSeoMeta({
 .hero-subtitle {
   margin-top: 14px;
   font-size: 30px;
-  color: #005172;
+  color: #1E4ED8;
   font-weight: 600;
 }
 
@@ -387,17 +387,17 @@ useSeoMeta({
   max-width: 640px;
   font-size: 17px;
   line-height: 1.55;
-  color: #495057;
+  color: #475569;
 }
 
 .hero-copy {
-  color: #495057;
+  color: #475569;
 }
 
 .hero-scope {
   margin-top: 14px;
-  border: 1px solid #8DB9A1;
-  background: #EAF3EE;
+  border: 1px solid #93C5FD;
+  background: #EFF6FF;
   padding: 16px;
   display: grid;
   gap: 12px;
@@ -415,7 +415,7 @@ useSeoMeta({
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  color: #0A3622;
+  color: #1E3A5F;
   font-size: 22px;
   font-weight: 700;
 }
@@ -441,7 +441,7 @@ useSeoMeta({
 }
 
 .hero-scope li span {
-  color: #0A3622;
+  color: #1E3A5F;
   font-size: 12px;
   font-weight: 700;
   text-transform: uppercase;
@@ -449,7 +449,7 @@ useSeoMeta({
 }
 
 .hero-scope li strong {
-  color: #495057;
+  color: #475569;
   font-size: 13px;
   font-weight: 600;
   line-height: 1.4;
@@ -463,9 +463,9 @@ useSeoMeta({
 }
 
 .hero-types .app-pill {
-  border-color: #8DB9A1;
-  background: #F2F8F4;
-  color: #0A3622;
+  border-color: #93C5FD;
+  background: #EFF6FF;
+  color: #1E3A5F;
   font-weight: 600;
 }
 
@@ -476,8 +476,8 @@ useSeoMeta({
 }
 
 .hero-stat-card {
-  border: 1px solid #A3CFBB;
-  background: #F2F8F4;
+  border: 1px solid #93C5FD;
+  background: #EFF6FF;
   min-height: 76px;
   padding: 10px;
   display: grid;
@@ -486,7 +486,7 @@ useSeoMeta({
 }
 
 .hero-stat-label {
-  color: #0A3622;
+  color: #1E3A5F;
   font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
@@ -495,7 +495,7 @@ useSeoMeta({
 }
 
 .hero-stat-value {
-  color: #0A3622;
+  color: #1E3A5F;
   font-size: 28px;
   line-height: 1;
   font-weight: 800;
@@ -511,7 +511,7 @@ useSeoMeta({
   overflow-x: auto;
   overflow-y: hidden;
   scrollbar-width: thin;
-  border-top: 1px solid #A3CFBB;
+  border-top: 1px solid #93C5FD;
   padding-top: 12px;
 }
 
@@ -519,7 +519,7 @@ useSeoMeta({
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  color: #495057;
+  color: #475569;
   font-size: 12px;
   line-height: 1.3;
   font-weight: 500;
@@ -527,7 +527,7 @@ useSeoMeta({
 }
 
 .hero-notes i {
-  color: #0A3622;
+  color: #1E3A5F;
   font-size: 10px;
 }
 
@@ -565,7 +565,7 @@ useSeoMeta({
 
 .dns-home-head span {
   font-size: 13px;
-  color: #6C757D;
+  color: #64748B;
 }
 
 
@@ -666,7 +666,7 @@ useSeoMeta({
 .reversemx-home-head span,
 .subdomain-home-head span {
   font-size: 13px;
-  color: #6C757D;
+  color: #64748B;
 }
 
 .tool-row,
@@ -704,7 +704,7 @@ useSeoMeta({
   border-radius: 0;
   padding: 0 12px;
   font-size: 15px;
-  color: #212529;
+  color: #1E293B;
   background: #ffffff;
 }
 
@@ -716,7 +716,7 @@ useSeoMeta({
 .subdomain-home-input:focus {
   outline: none;
   border-color: var(--app-accent);
-  box-shadow: 0 0 0 2px rgba(114, 191, 128, 0.15);
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15);
 }
 
 .tool-btn,
@@ -731,7 +731,7 @@ useSeoMeta({
   border: 1px solid transparent;
   border-radius: 0;
   background: var(--app-accent);
-  color: #f6fffb;
+  color: #ffffff;
   font-weight: 700;
   display: inline-flex;
   align-items: center;
@@ -775,7 +775,7 @@ useSeoMeta({
 }
 
 .home-section-head span {
-  color: #6C757D;
+  color: #64748B;
   font-size: 13px;
 }
 
@@ -794,7 +794,7 @@ useSeoMeta({
 
 .info-card h4 {
   margin: 0 0 6px;
-  color: #6C757D;
+  color: #64748B;
   font-size: 14px;
   line-height: 1.2;
   font-weight: 700;
@@ -802,7 +802,7 @@ useSeoMeta({
 
 .info-card p {
   margin: 0;
-  color: #6C757D;
+  color: #64748B;
   font-size: 13px;
   line-height: 1.45;
 }
@@ -830,12 +830,12 @@ useSeoMeta({
 
 :global(html[data-theme="dark"]) .hero {
   border-color: var(--panel-border);
-  background: #151515;
+  background: #0D1320;
 }
 
 :global(html[data-theme="dark"]) .hero-scope {
   border-color: var(--panel-border);
-  background: #1A1A1A;
+  background: #111827;
 }
 
 :global(html[data-theme="dark"]) .hero-scope h3,
@@ -847,17 +847,17 @@ useSeoMeta({
 :global(html[data-theme="dark"]) .hero-scope li strong,
 :global(html[data-theme="dark"]) .hero-notes span,
 :global(html[data-theme="dark"]) .hero-stat-value {
-  color: #EBEBEB;
+  color: #E2E8F0;
 }
 
 :global(html[data-theme="dark"]) .hero-types .app-pill,
 :global(html[data-theme="dark"]) .hero-stat-card {
   border-color: var(--panel-border);
-  background: #151515;
+  background: #0D1320;
 }
 
 :global(html[data-theme="dark"]) .hero-stat-label {
-  color: #99A1AF;
+  color: #94A3B8;
 }
 
 :global(html[data-theme="dark"]) .hero-notes {

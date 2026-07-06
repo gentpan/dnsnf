@@ -297,7 +297,7 @@ watch(
   border: 0;
   border-bottom: 2px solid transparent;
   background: transparent;
-  color: #6C757D;
+  color: #64748B;
   font-weight: 600;
   letter-spacing: 0.01em;
   padding: 10px 8px 12px;
@@ -307,11 +307,11 @@ watch(
 }
 
 .dns-record-tab:hover {
-  color: #212529;
+  color: #1E293B;
 }
 
 .dns-record-tab.is-active {
-  color: #212529;
+  color: #1E293B;
   border-bottom-color: var(--app-accent);
 }
 

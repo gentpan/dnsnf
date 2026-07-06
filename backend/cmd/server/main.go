@@ -51,16 +51,18 @@ func main() {
 	dnsHandler := handlers.NewDNSHandler(dnsService)
 	historyHandler := handlers.NewDnsHistoryHandler(pgRepo, cfg.InternalToken)
 	rdnsHandler := handlers.NewRdnsRecordHandler(pgRepo, cfg.InternalToken)
+	discoveryHandler := handlers.NewDiscoveryHandler(redisStore, pgRepo, cfg.DNSUpstream)
 
 	loggerMW := middleware.NewRequestLogger(logger)
-	// V1: 对外，1分钟30次
-	v1Limiter := middleware.NewRateLimiter(30, time.Minute)
+	// V1: public API, 60 requests per minute.
+	v1Limiter := middleware.NewRateLimiter(60, time.Minute)
 	// V2: 对内，Token认证，无限流
 	v2TokenAuth := middleware.NewTokenAuth(cfg.InternalToken)
 	recoveryMW := middleware.NewRecovery(logger)
 	corsMW := middleware.NewCORS(cfg.CORSOrigins)
 	metricsMW := middleware.NewMetrics()
-	router := handlers.NewRouter(dnsHandler, historyHandler, rdnsHandler, loggerMW, v1Limiter, recoveryMW, corsMW, metricsMW, v2TokenAuth)
+	analyticsReporter := middleware.NewAnalyticsReporter(cfg.AnalyticsURL, cfg.InternalToken)
+	router := handlers.NewRouter(dnsHandler, historyHandler, rdnsHandler, discoveryHandler, loggerMW, v1Limiter, recoveryMW, corsMW, metricsMW, v2TokenAuth, analyticsReporter)
 
 	server := &http.Server{
 		Addr:         ":" + cfg.Port,

@@ -90,7 +90,7 @@ const featureRows: FeatureRow[] = [
     name: "DNS History",
     page: "/dns-history",
     api: "/v1/dns/history",
-    note: "Passive DNS records from CIRCL, Robtex, and local query history — permanently stored",
+    note: "Read passive DNS records from CIRCL, Robtex, and local query history",
   },
 ]
 
@@ -152,18 +152,11 @@ const endpointRows: EndpointRow[] = [
     limit: "30 req/min per client IP",
   },
   {
-    method: "POST",
-    path: "/v1/dns/history",
-    query: "(JSON body)",
-    purpose: "Ingest passive DNS records (internal / V2 use)",
-    limit: "Requires Bearer token",
-  },
-  {
     method: "GET",
     path: "/health",
     query: "(none)",
     purpose: "Health check endpoint",
-    limit: "No auth; monitoring use",
+    limit: "No token required",
   },
 ]
 
@@ -350,7 +343,7 @@ const errorRows: ErrorRow[] = [
   { code: "200", meaning: "Success — response body contains code, data, cached, timestamp." },
   { code: "400", meaning: "Bad Request — missing or invalid query parameters." },
   { code: "404", meaning: "Not Found — no records found for the requested target." },
-  { code: "429", meaning: "Too Many Requests — rate limit exceeded (30 req/min for V1)." },
+  { code: "429", meaning: "Too Many Requests — public rate limit or scan cooldown exceeded." },
   { code: "500", meaning: "Internal Server Error — upstream lookup failure." },
 ]
 
@@ -533,8 +526,8 @@ onBeforeUnmount(() => stopTyping())
       <div class="docs-badges">
         <span class="docs-badge"><i class="fa-solid fa-gauge-high" aria-hidden="true"></i> DNS Lookup: 30 req/min per IP</span>
         <span class="docs-badge"><i class="fa-solid fa-satellite-dish" aria-hidden="true"></i> rDNS: 30s cooldown per client</span>
-        <span class="docs-badge"><i class="fa-solid fa-server" aria-hidden="true"></i> V1: Public (30 req/min) | V2: Internal (Token required)</span>
-        <span class="docs-badge"><i class="fa-solid fa-database" aria-hidden="true"></i> Passive DNS permanently stored in PostgreSQL</span>
+        <span class="docs-badge"><i class="fa-solid fa-unlock-keyhole" aria-hidden="true"></i> Public queries: no token required</span>
+        <span class="docs-badge"><i class="fa-solid fa-database" aria-hidden="true"></i> Passive DNS from public datasets</span>
       </div>
     </section>
 
@@ -591,7 +584,7 @@ onBeforeUnmount(() => stopTyping())
         </table>
       </div>
       <p class="endpoint-note">
-        <strong>V1 API</strong>: Public access, rate limited (30 req/min). <strong>V2 API</strong>: Internal use only, requires Bearer token, no rate limit.
+        Public query endpoints do not require an API token. Some endpoints are rate limited or capped to keep the free service available.
       </p>
     </section>
 
@@ -717,7 +710,7 @@ onBeforeUnmount(() => stopTyping())
 
 .docs-hero h1 {
   margin: 0;
-  color: #212529;
+  color: #1E293B;
   font-size: 24px;
   display: inline-flex;
   align-items: center;
@@ -726,14 +719,14 @@ onBeforeUnmount(() => stopTyping())
 
 .docs-hero p {
   margin-top: 8px;
-  color: #6C757D;
+  color: #64748B;
   font-size: 14px;
 }
 
 .inline-code {
   background: #f4f6f8;
   border: 1px solid var(--panel-border);
-  color: #212529;
+  color: #1E293B;
   font-size: 13px;
   padding: 2px 6px;
 }
@@ -764,7 +757,7 @@ onBeforeUnmount(() => stopTyping())
 
 .section-head h2 {
   margin: 0;
-  color: #212529;
+  color: #1E293B;
   font-size: 19px;
   display: inline-flex;
   align-items: center;
@@ -788,7 +781,7 @@ onBeforeUnmount(() => stopTyping())
   padding: 10px;
   vertical-align: top;
   text-align: left;
-  color: #212529;
+  color: #1E293B;
   font-size: 13px;
   line-height: 1.45;
 }
@@ -815,7 +808,7 @@ onBeforeUnmount(() => stopTyping())
 
 .docs-table th {
   background: #f8f9fa;
-  color: #6C757D;
+  color: #64748B;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.03em;
@@ -829,7 +822,7 @@ onBeforeUnmount(() => stopTyping())
 .endpoint-note code {
   background: #f4f6f8;
   border: 1px solid var(--panel-border);
-  color: #212529;
+  color: #1E293B;
   font-size: 12px;
   padding: 2px 6px;
   white-space: normal;
@@ -858,7 +851,7 @@ onBeforeUnmount(() => stopTyping())
 
 .endpoint-note {
   margin-top: 10px;
-  color: #6C757D;
+  color: #64748B;
   font-size: 13px;
 }
 
@@ -910,7 +903,7 @@ onBeforeUnmount(() => stopTyping())
 .terminal-example-btn {
   border: 1px solid var(--panel-border);
   background: #ffffff;
-  color: #212529;
+  color: #1E293B;
   text-align: left;
   padding: 8px;
   cursor: pointer;
@@ -930,7 +923,7 @@ onBeforeUnmount(() => stopTyping())
 
 .terminal-example-desc {
   font-size: 12px;
-  color: #6C757D;
+  color: #64748B;
 }
 
 .terminal-shell {

@@ -1,0 +1,479 @@
+import * as React from 'react'
+import { useQuery } from '@tanstack/react-query'
+import { Link } from '@tanstack/react-router'
+import { Loader2, LockKeyhole, Search, XCircle } from 'lucide-react'
+import { api, type DnsRecordType } from '@/lib/api'
+import { getRelatedArticles, type BlogArticle } from '@/lib/blog'
+import { Select } from './base-select'
+import { Badge, Button, Card, CardContent, CardHeader, EmptyState, Input, StatusBadge } from './ui'
+
+const recordTypes: DnsRecordType[] = ['ALL', 'A', 'AAAA', 'CNAME', 'MX', 'NS', 'TXT', 'CAA', 'SOA', 'SRV', 'PTR']
+const displayRecordTypes = recordTypes.filter((recordType) => recordType !== 'ALL')
+const recordTypeOptions = recordTypes.map((value) => ({ value, label: value }))
+const rdnsModeOptions = [
+  { value: 'middle', label: 'Contains' },
+  { value: 'left', label: 'Starts with' },
+  { value: 'right', label: 'Ends with' },
+]
+
+export function PageTitle({ title, body }: { title: string; body: string }) {
+  return (
+    <div className="mb-5 flex flex-col gap-3 border-b border-zinc-200 pb-5 sm:flex-row sm:items-end sm:justify-between">
+      <div>
+        <div className="mb-2 text-xs font-medium uppercase text-zinc-500">DNS.NF console</div>
+        <h1 className="text-2xl font-semibold tracking-normal text-zinc-950">{title}</h1>
+        <p className="mt-2 max-w-3xl text-sm leading-6 text-zinc-600">{body}</p>
+      </div>
+      <StatusBadge tone="blue" className="w-fit">Live query</StatusBadge>
+    </div>
+  )
+}
+
+export function UsageGuide({
+  description,
+  points,
+  tags,
+}: {
+  description: string
+  points: string[]
+  tags: string[]
+}) {
+  return (
+    <Card>
+      <CardHeader className="bg-zinc-50/60">
+        <div className="text-sm font-medium">How This Query Works</div>
+        <div className="mt-1 text-xs leading-5 text-zinc-500">{description}</div>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="grid gap-2">
+          {points.map((point) => (
+            <div key={point} className="flex gap-3 rounded-md border border-zinc-200 bg-white p-3 text-sm leading-6 text-zinc-600">
+              <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-zinc-950" />
+              <span>{point}</span>
+            </div>
+          ))}
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {tags.map((tag) => (
+            <Badge key={tag}>{tag}</Badge>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
+export function RelatedGuides({ category }: { category: BlogArticle['category'] }) {
+  const articles = getRelatedArticles(category, 3)
+
+  return (
+    <Card>
+      <CardHeader className="bg-zinc-50/60">
+        <div className="text-sm font-medium">Related Guides</div>
+        <div className="mt-1 text-xs leading-5 text-zinc-500">Short articles explaining when and why to use this query.</div>
+      </CardHeader>
+      <CardContent className="grid gap-3">
+        {articles.map((article) => (
+          <Link
+            key={article.slug}
+            to="/blog/$slug"
+            params={{ slug: article.slug }}
+            className="block rounded-lg border border-zinc-200 bg-white p-4 transition hover:border-zinc-300 hover:bg-zinc-50"
+          >
+            <div className="flex flex-wrap items-center gap-2">
+              <h2 className="text-sm font-semibold tracking-normal text-zinc-950">{article.title}</h2>
+              <Badge>{article.readTime}</Badge>
+            </div>
+            <p className="mt-2 text-sm leading-6 text-zinc-600">{article.description}</p>
+          </Link>
+        ))}
+      </CardContent>
+    </Card>
+  )
+}
+
+export function LookupPanel({ initialTarget = '' }: { initialTarget?: string }) {
+  const [target, setTarget] = React.useState(initialTarget)
+  const [submitted, setSubmitted] = React.useState(initialTarget)
+  const [type, setType] = React.useState<DnsRecordType>('ALL')
+  const query = useQuery({
+    queryKey: ['lookup', submitted, type],
+    queryFn: () => api.lookup(submitted, type),
+    enabled: submitted.length > 0,
+  })
+
+  return (
+    <div className="space-y-5">
+      <Card className="overflow-hidden">
+        <CardHeader className="flex flex-row items-center justify-between bg-zinc-50/70">
+          <div className="flex items-center gap-2 text-sm font-medium">
+            <Search className="h-4 w-4 text-sky-600" />
+            Query target
+          </div>
+          <Badge>{type}</Badge>
+        </CardHeader>
+        <CardContent>
+          <form
+            className="grid gap-3 sm:grid-cols-[1fr_150px_auto]"
+            onSubmit={(event) => {
+              event.preventDefault()
+              setSubmitted(target.trim())
+            }}
+          >
+            <Input value={target} onChange={(event) => setTarget(event.target.value)} placeholder="example.com or 8.8.8.8" />
+            <Select
+              value={type}
+              onValueChange={(next) => setType(next as DnsRecordType)}
+              options={recordTypeOptions}
+              ariaLabel="Record type"
+            />
+            <Button>
+              <Search className="h-4 w-4" />
+              Lookup
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+      {renderQueryState(query.isFetching, query.error)}
+      {query.data ? <DnsResult payload={query.data.data} cached={query.data.cached} selectedType={type} /> : null}
+      {!query.data && !query.isFetching ? <EmptyState title="Ready for a lookup" body="Enter a domain, IP, or CIDR range." /> : null}
+    </div>
+  )
+}
+
+function DnsResult({
+  payload,
+  cached,
+  selectedType,
+}: {
+  payload: Awaited<ReturnType<typeof api.lookup>>['data']
+  cached: boolean
+  selectedType: DnsRecordType
+}) {
+  const records = payload.records || {}
+  const groups = (selectedType === 'ALL' ? displayRecordTypes : [selectedType]).map((recordType) => ({
+    type: recordType,
+    value: records[recordType as keyof typeof records],
+  }))
+  const nonEmptyGroups = groups.filter((group) => hasRecordValue(group.value))
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between bg-zinc-50/60">
+        <div>
+          <div className="font-mono text-sm font-medium">{payload.domain || payload.ip}</div>
+          <div className="mt-1 text-xs text-zinc-500">
+            {nonEmptyGroups.length} record groups · {payload.reverse_dns.length} reverse DNS rows
+          </div>
+        </div>
+        <StatusBadge tone={cached ? 'amber' : 'green'}>{cached ? 'cached' : 'fresh'}</StatusBadge>
+      </CardHeader>
+      <CardContent className="grid gap-4">
+        {payload.reverse_dns.length > 0 ? <KeyValue title="Reverse DNS" value={payload.reverse_dns.join('\n')} /> : null}
+        {nonEmptyGroups.map((group) => (
+          <KeyValue key={group.type} title={group.type} value={formatRecordValue(group.value)} />
+        ))}
+      </CardContent>
+    </Card>
+  )
+}
+
+export function ReverseIpPanel() {
+  const [ip, setIp] = React.useState('')
+  const [submitted, setSubmitted] = React.useState('')
+  const query = useQuery({ queryKey: ['reverse-ip', submitted], queryFn: () => api.reverseIp(submitted), enabled: !!submitted })
+  return (
+    <GenericRowsPanel
+      value={ip}
+      setValue={setIp}
+      submit={() => setSubmitted(ip.trim())}
+      placeholder="8.8.8.8"
+      button="Search"
+      loading={query.isFetching}
+      error={query.error}
+      rows={query.data?.data.domains.map((row) => ({ name: row.domain || '', detail: row.sources.join(', ') })) || []}
+      empty="Search an IPv4 address to find domains observed on the same server."
+    />
+  )
+}
+
+export function SubdomainPanel() {
+  const [domain, setDomain] = React.useState('')
+  const [submitted, setSubmitted] = React.useState('')
+  const query = useQuery({ queryKey: ['subdomains', submitted], queryFn: () => api.subdomains(submitted), enabled: !!submitted })
+  return (
+    <GenericRowsPanel
+      value={domain}
+      setValue={setDomain}
+      submit={() => setSubmitted(domain.trim())}
+      placeholder="example.com"
+      button="Discover"
+      loading={query.isFetching}
+      error={query.error}
+      rows={query.data?.data.items.map((row) => ({ name: row.host || row.domain || '', detail: row.sources.join(', ') })) || []}
+      empty="Search a domain to collect public subdomain observations."
+    />
+  )
+}
+
+export function SharedPanel({ kind }: { kind: 'ns' | 'mx' }) {
+  const [domain, setDomain] = React.useState('')
+  const [submitted, setSubmitted] = React.useState('')
+  const nsQuery = useQuery({
+    queryKey: ['reverse-ns', submitted],
+    queryFn: () => api.reverseNs(submitted),
+    enabled: kind === 'ns' && !!submitted,
+  })
+  const mxQuery = useQuery({
+    queryKey: ['reverse-mx', submitted],
+    queryFn: () => api.reverseMx(submitted),
+    enabled: kind === 'mx' && !!submitted,
+  })
+  const rows =
+    kind === 'ns'
+      ? nsQuery.data?.data.items.map((row) => ({ name: row.domain, detail: row.shared_ns.join(', ') })) || []
+      : mxQuery.data?.data.items.map((row) => ({ name: row.domain, detail: row.shared_mx.join(', ') })) || []
+  const loading = kind === 'ns' ? nsQuery.isFetching : mxQuery.isFetching
+  const error = kind === 'ns' ? nsQuery.error : mxQuery.error
+  return (
+    <GenericRowsPanel
+      value={domain}
+      setValue={setDomain}
+      submit={() => setSubmitted(domain.trim())}
+      placeholder={kind === 'ns' ? 'example.com' : 'example.com or mx.example.com'}
+      button="Find shared"
+      loading={loading}
+      error={error}
+      rows={rows}
+      empty={`Search a domain to find other domains sharing ${kind.toUpperCase()} infrastructure.`}
+    />
+  )
+}
+
+export function RdnsSearchPanel() {
+  const [keyword, setKeyword] = React.useState('')
+  const [mode, setMode] = React.useState('middle')
+  const [submitted, setSubmitted] = React.useState('')
+  const query = useQuery({
+    queryKey: ['rdns-search', submitted, mode],
+    queryFn: () => api.rdnsSearch(submitted, mode),
+    enabled: submitted.length >= 2,
+  })
+  return (
+    <div className="space-y-5">
+      <form
+        className="grid gap-3 sm:grid-cols-[1fr_150px_auto]"
+        onSubmit={(event) => {
+          event.preventDefault()
+          setSubmitted(keyword.trim())
+        }}
+      >
+        <Input value={keyword} onChange={(event) => setKeyword(event.target.value)} placeholder="google" />
+        <Select value={mode} onValueChange={setMode} options={rdnsModeOptions} ariaLabel="Match mode" />
+        <Button>
+          <Search className="h-4 w-4" />
+          Search
+        </Button>
+      </form>
+      {renderQueryState(query.isFetching, query.error)}
+      <Rows rows={query.data?.data.records.map((row) => ({ name: row.ptr, detail: row.ip })) || []} empty="Search stored PTR records." />
+    </div>
+  )
+}
+
+export function DnssecPanel() {
+  const [domain, setDomain] = React.useState('')
+  const [submitted, setSubmitted] = React.useState('')
+  const query = useQuery({
+    queryKey: ['dnssec', submitted],
+    queryFn: () => api.dnssec(submitted),
+    enabled: !!submitted,
+  })
+  const data = query.data?.data
+  const rows = data
+    ? Object.entries(data.records).map(([type, record]) => ({
+        name: type,
+        detail: `${record.values.length} records`,
+      }))
+    : []
+
+  return (
+    <div className="space-y-5">
+      <Card>
+        <CardContent>
+          <form
+            className="grid gap-3 sm:grid-cols-[1fr_auto]"
+            onSubmit={(event) => {
+              event.preventDefault()
+              setSubmitted(domain.trim())
+            }}
+          >
+            <Input value={domain} onChange={(event) => setDomain(event.target.value)} placeholder="example.com" />
+            <Button>
+              <LockKeyhole className="h-4 w-4" />
+              Check DNSSEC
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+      {renderQueryState(query.isFetching, query.error)}
+      {data ? (
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between bg-zinc-50/60">
+            <div>
+              <div className="font-mono text-sm font-medium">{data.domain}</div>
+              <div className="mt-1 text-xs text-zinc-500">DNSSEC posture score</div>
+            </div>
+            <StatusBadge tone={data.status === 'strong' ? 'green' : data.status === 'partial' ? 'amber' : 'red'}>
+              {data.score}/100
+            </StatusBadge>
+          </CardHeader>
+          <CardContent>
+            <Rows rows={rows} empty="No DNSSEC records returned." />
+          </CardContent>
+        </Card>
+      ) : (
+        <EmptyState title="No check yet" body="Enter a domain to inspect DNSSEC records." />
+      )}
+    </div>
+  )
+}
+
+function GenericRowsPanel({
+  value,
+  setValue,
+  submit,
+  placeholder,
+  button,
+  loading,
+  error,
+  rows,
+  empty,
+}: {
+  value: string
+  setValue: (value: string) => void
+  submit: () => void
+  placeholder: string
+  button: string
+  loading: boolean
+  error: Error | null
+  rows: Array<{ name: string; detail: string }>
+  empty: string
+}) {
+  return (
+    <div className="space-y-5">
+      <Card>
+        <CardContent>
+          <form
+            className="grid gap-3 sm:grid-cols-[1fr_auto]"
+            onSubmit={(event) => {
+              event.preventDefault()
+              submit()
+            }}
+          >
+            <Input value={value} onChange={(event) => setValue(event.target.value)} placeholder={placeholder} />
+            <Button>
+              <Search className="h-4 w-4" />
+              {button}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+      {renderQueryState(loading, error)}
+      <Rows rows={rows} empty={empty} />
+    </div>
+  )
+}
+
+function Rows({ rows, empty }: { rows: Array<{ name: string; detail: string }>; empty: string }) {
+  if (rows.length === 0) return <EmptyState title="No rows yet" body={empty} />
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between bg-zinc-50/60">
+        <div className="text-sm font-medium">Results</div>
+        <Badge>{rows.length} rows</Badge>
+      </CardHeader>
+      <CardContent className="p-0">
+        <div className="divide-y divide-zinc-100">
+          {rows.map((row) => (
+            <div
+              key={`${row.name}-${row.detail}`}
+              className="grid gap-1 p-4 transition hover:bg-zinc-50/80 sm:grid-cols-[1fr_260px] sm:items-center"
+            >
+              <div className="min-w-0 truncate font-mono text-sm text-zinc-900">{row.name}</div>
+              <div className="truncate text-sm text-zinc-500 sm:text-right">{row.detail}</div>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
+function KeyValue({ title, value, empty = false }: { title: string; value: string; empty?: boolean }) {
+  return (
+    <div className="min-w-0 rounded-lg border border-zinc-200 bg-zinc-50/50 p-3">
+      <div className="mb-2 flex items-center justify-between gap-2">
+        <div className="text-xs font-medium uppercase text-zinc-500">{title}</div>
+        <Badge>{empty ? 0 : value.split('\n').filter(Boolean).length}</Badge>
+      </div>
+      <pre
+        className={
+          empty
+            ? 'rounded-md border border-dashed border-zinc-200 bg-white p-3 text-xs leading-5 text-zinc-400'
+            : 'max-h-72 overflow-auto whitespace-pre-wrap break-words rounded-md bg-zinc-950 p-3 text-xs leading-5 text-zinc-50'
+        }
+      >
+        {empty ? 'No records' : value}
+      </pre>
+    </div>
+  )
+}
+
+function hasRecordValue(value: unknown) {
+  if (Array.isArray(value)) return value.length > 0
+  if (value && typeof value === 'object') return Object.keys(value).length > 0
+  return value !== undefined && value !== null && value !== ''
+}
+
+function renderQueryState(loading: boolean, error: Error | null) {
+  if (loading) {
+    return (
+      <StatusBadge tone="blue">
+        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+        Loading
+      </StatusBadge>
+    )
+  }
+  if (error) {
+    return (
+      <div className="flex items-center gap-2 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+        <XCircle className="h-4 w-4" />
+        {error.message}
+      </div>
+    )
+  }
+  return null
+}
+
+function formatRecordValue(value: unknown) {
+  if (Array.isArray(value)) {
+    return value
+      .map((row) => {
+        if (typeof row === 'string') return row
+        if (row && typeof row === 'object') {
+          return Object.entries(row)
+            .map(([key, itemValue]) => `${key}: ${String(itemValue)}`)
+            .join(' · ')
+        }
+        return String(row)
+      })
+      .join('\n')
+  }
+  if (value && typeof value === 'object') {
+    return Object.entries(value)
+      .filter(([, v]) => v !== undefined && v !== '')
+      .map(([key, v]) => `${key}: ${String(v)}`)
+      .join('\n')
+  }
+  return String(value ?? '')
+}

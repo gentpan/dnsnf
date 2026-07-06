@@ -198,7 +198,7 @@ useSeoMeta({
   margin-left: 8px;
   border: 1px solid var(--query-line);
   background: #ffffff;
-  color: #6C757D;
+  color: #64748B;
   padding: 1px 7px;
   font-size: 11px;
   font-weight: 700;

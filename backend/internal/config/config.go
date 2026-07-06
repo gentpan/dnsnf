@@ -26,6 +26,7 @@ type Config struct {
 	DNSUpstream   []string
 	CORSOrigins   []string
 	InternalToken string
+	AnalyticsURL  string
 }
 
 func Load() (*Config, error) {
@@ -52,6 +53,7 @@ func Load() (*Config, error) {
 		DNSUpstream:   splitCSV(getenv("DNS_UPSTREAM", "1.1.1.1:53")),
 		CORSOrigins:   splitCSV(getenv("CORS_ALLOWED_ORIGINS", "https://dns.nf,http://localhost:3000")),
 		InternalToken: getenv("INTERNAL_TOKEN", ""),
+		AnalyticsURL:  getenv("ANALYTICS_URL", ""),
 	}
 
 	return cfg, nil

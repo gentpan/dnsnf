@@ -420,7 +420,7 @@ useSeoMeta({
   display: flex;
   align-items: center;
   justify-content: space-between;
-  color: #212529;
+  color: #1E293B;
   font-size: 17px;
 }
 
@@ -428,7 +428,7 @@ useSeoMeta({
   display: inline-flex;
   align-items: center;
   gap: 9px;
-  color: #212529;
+  color: #1E293B;
   font-weight: 800;
 }
 
@@ -450,7 +450,7 @@ useSeoMeta({
   border-bottom: none;
   border-radius: 0;
   background: #f8f9fa;
-  color: #6C757D;
+  color: #64748B;
   font-size: 13px;
   font-weight: 700;
   padding: 8px 16px;
@@ -487,7 +487,7 @@ useSeoMeta({
   margin-top: 14px;
   padding: 14px;
   border: 1px solid var(--query-line);
-  color: #6C757D;
+  color: #64748B;
   font-size: 13px;
   text-align: center;
 }
@@ -547,7 +547,7 @@ useSeoMeta({
 }
 
 .rdns-usage-title {
-  color: #212529;
+  color: #1E293B;
   font-size: 13px;
   font-weight: 700;
   text-transform: uppercase;
@@ -567,7 +567,7 @@ useSeoMeta({
   border: 1px solid var(--query-line);
   border-radius: 0;
   background: #ffffff;
-  color: #6C757D;
+  color: #64748B;
   font-size: 12px;
   font-weight: 600;
   line-height: 1;
@@ -585,7 +585,7 @@ useSeoMeta({
 .rdns-quick-btn.is-active {
   color: var(--app-accent);
   border-color: var(--app-accent);
-  background: rgba(114, 191, 128, 0.08);
+  background: rgba(76, 154, 255, 0.08);
 }
 
 .rdns-quick-clear {
@@ -599,7 +599,7 @@ useSeoMeta({
   border-radius: 0;
   padding: 0 12px;
   font-size: 16px;
-  color: #212529;
+  color: #1E293B;
   background: #fff;
 }
 
@@ -609,25 +609,25 @@ useSeoMeta({
   border-radius: 0;
   padding: 0 10px;
   font-size: 15px;
-  color: #212529;
+  color: #1E293B;
   background: #fff;
 }
 
 .rdns-input:focus {
   outline: none;
   border-color: var(--app-accent);
-  box-shadow: 0 0 0 2px rgba(114, 191, 128, 0.15);
+  box-shadow: 0 0 0 2px rgba(76, 154, 255, 0.15);
 }
 
 .rdns-select:focus {
   outline: none;
   border-color: var(--app-accent);
-  box-shadow: 0 0 0 2px rgba(114, 191, 128, 0.15);
+  box-shadow: 0 0 0 2px rgba(76, 154, 255, 0.15);
 }
 
 .rdns-hint {
   margin: 6px 0 8px;
-  color: #6C757D;
+  color: #64748B;
   font-size: 13px;
 }
 
@@ -662,7 +662,7 @@ useSeoMeta({
 }
 
 .rdns-summary .record-name {
-  color: #6C757D;
+  color: #64748B;
   font-size: 12px;
   font-weight: 600;
   text-transform: uppercase;
@@ -670,7 +670,7 @@ useSeoMeta({
 }
 
 .rdns-summary .record-count {
-  color: #212529;
+  color: #1E293B;
   font-size: 22px;
   font-weight: 700;
   line-height: 1;
@@ -701,7 +701,7 @@ useSeoMeta({
   padding: 10px;
   text-align: left;
   vertical-align: top;
-  color: #212529;
+  color: #1E293B;
   word-break: break-word;
 }
 
@@ -709,22 +709,22 @@ useSeoMeta({
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  border: 1px solid rgba(114, 191, 128, 0.35);
+  border: 1px solid rgba(76, 154, 255, 0.35);
   border-radius: 0;
   color: var(--app-accent);
-  background: rgba(114, 191, 128, 0.12);
+  background: rgba(76, 154, 255, 0.12);
   font-size: 12px;
   font-weight: 700;
   padding: 2px 8px;
 }
 
 .rdns-table th {
-  background: #F8F9FA;
+  background: #F8FAFC;
   font-weight: 700;
 }
 
 .muted {
-  color: #6C757D;
+  color: #64748B;
 }
 
 .score-badge {
@@ -739,12 +739,12 @@ useSeoMeta({
 
 .score-high {
   color: var(--app-accent);
-  border-color: rgba(114, 191, 128, 0.4);
-  background: rgba(114, 191, 128, 0.1);
+  border-color: rgba(76, 154, 255, 0.4);
+  background: rgba(76, 154, 255, 0.1);
 }
 
 .score-mid {
-  color: #6C757D;
+  color: #64748B;
 }
 
 .score-low {

@@ -122,7 +122,7 @@ watch([target, type], fetchCurrent);
 
 .lookup-hint {
   margin: 6px 0 8px;
-  color: #6C757D;
+  color: #64748B;
   font-size: 13px;
 }
 

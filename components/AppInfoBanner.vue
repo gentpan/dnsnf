@@ -105,8 +105,8 @@ const banner = computed(() => byPath(route.path))
 .site-announce {
   width: 100%;
   min-height: 124px;
-  border: 1px solid #A3CFBB;
-  background: #D1E7DD;
+  border: 1px solid #93C5FD;
+  background: #DBEAFE;
   border-radius: 0;
   display: flex;
   flex-direction: column;
@@ -114,7 +114,7 @@ const banner = computed(() => byPath(route.path))
   align-items: center;
   justify-content: center;
   margin-bottom: 0;
-  color: #0A3622;
+  color: #1E3A5F;
   font-size: 16px;
   font-weight: 400;
   padding: 14px 18px;
@@ -126,7 +126,7 @@ const banner = computed(() => byPath(route.path))
 }
 
 .site-announce-subtitle {
-  color: #0A3622;
+  color: #1E3A5F;
   font-size: 14px;
   text-align: center;
   line-height: 1.4;
@@ -141,9 +141,9 @@ const banner = computed(() => byPath(route.path))
 }
 
 .site-types .app-pill {
-  border-color: #0A3622;
+  border-color: #1E3A5F;
   background: rgba(255, 255, 255, 0.72);
-  color: #0A3622;
+  color: #1E3A5F;
   font-weight: 600;
 }
 
