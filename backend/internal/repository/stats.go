@@ -43,7 +43,7 @@ func (p *PostgresRepository) GetTrafficStatsCursor(ctx context.Context) (models.
 			0,
 			(NOW() AT TIME ZONE 'UTC')::date,
 			(NOW() AT TIME ZONE 'UTC')::date - 1,
-			TRUE
+			FALSE
 		)
 		ON CONFLICT (key) DO UPDATE SET key = EXCLUDED.key
 		RETURNING started_at, last_checked_at, total_requests, total_visitors, total_started_date, total_through_date, seeded_from_30d

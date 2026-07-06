@@ -114,6 +114,26 @@ func (s *CloudflareAnalyticsService) fetchTotalTrafficStats(ctx context.Context,
 
 	totalRequests := cursor.TotalRequests
 	totalVisitors := cursor.TotalVisitors
+	if !cursor.SeededFrom30D || (totalRequests == 0 && totalVisitors == 0) {
+		seedSince := today.AddDate(0, 0, -30)
+		seed, err := s.queryDailyRange(ctx, "total", seedSince, today, true)
+		if err != nil {
+			return models.TrafficStats{}, err
+		}
+		totalRequests = seed.Requests
+		totalVisitors = seed.Visitors
+		totalThrough = today
+		if err := s.baseline.UpdateTrafficStatsCursor(ctx, now, totalRequests, totalVisitors, totalThrough, true); err != nil {
+			return models.TrafficStats{}, fmt.Errorf("seed traffic baseline: %w", err)
+		}
+		return models.TrafficStats{
+			Range:     "total",
+			Requests:  totalRequests,
+			Visitors:  totalVisitors,
+			UpdatedAt: now,
+		}, nil
+	}
+
 	nextClosedDay := totalThrough.AddDate(0, 0, 1)
 	if !nextClosedDay.After(yesterday) {
 		closed, err := s.queryDailyRange(ctx, "total", nextClosedDay, yesterday, true)
