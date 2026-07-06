@@ -189,8 +189,8 @@ function ResolverButton({
       ].join(' ')}
     >
       {logoSrc ? (
-        <span className="inline-flex h-5 w-5 items-center justify-center rounded bg-white">
-          <img src={logoSrc} alt="" className="max-h-4 max-w-4 object-contain" />
+        <span className="inline-flex h-5 w-5 items-center justify-center">
+          <img src={logoSrc} alt="" className="max-h-[18px] max-w-[18px] object-contain" />
         </span>
       ) : Icon ? (
         <Icon className="h-3.5 w-3.5" />
