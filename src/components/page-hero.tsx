@@ -30,6 +30,14 @@ export function PageHero({
   className?: string
 }) {
   const isDark = variant === 'dark'
+  const eyebrowClassName = cn(
+    'text-xs font-semibold uppercase tracking-normal',
+    eyebrowTone === 'zinc' && (isDark ? 'text-zinc-300' : 'text-zinc-500'),
+    eyebrowTone === 'green' && 'text-emerald-600',
+    eyebrowTone === 'blue' && 'text-sky-600',
+    eyebrowTone === 'amber' && 'text-amber-700',
+    eyebrowTone === 'red' && 'text-red-600',
+  )
 
   return (
     <section
@@ -40,18 +48,16 @@ export function PageHero({
       )}
     >
       <div className={cn('p-5 sm:p-6', isDark ? 'border-b border-white/10' : 'border-b border-zinc-100')}>
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div className="flex items-start justify-between gap-3">
+          <div className={eyebrowClassName}>{eyebrow}</div>
+          {badge ? (
+            <StatusBadge tone={badgeTone} className="w-fit shrink-0 whitespace-nowrap">
+              {badge}
+            </StatusBadge>
+          ) : null}
+        </div>
+        <div className="mt-3 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div className="min-w-0">
-            <div className="mb-3 flex flex-wrap items-center gap-2">
-              <StatusBadge tone={eyebrowTone} className="uppercase tracking-normal">
-                {eyebrow}
-              </StatusBadge>
-              {badge ? (
-                <StatusBadge tone={badgeTone} className="w-fit shrink-0 whitespace-nowrap">
-                  {badge}
-                </StatusBadge>
-              ) : null}
-            </div>
             <h1 className={cn('text-2xl font-semibold tracking-normal sm:text-3xl', isDark ? 'text-white' : 'text-zinc-950')}>{title}</h1>
             <p className={cn('mt-2 max-w-3xl text-sm leading-6', isDark ? 'text-zinc-300' : 'text-zinc-600')}>{body}</p>
           </div>
