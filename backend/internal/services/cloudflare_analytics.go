@@ -35,6 +35,8 @@ type CloudflareAnalyticsService struct {
 	baseline   TrafficBaselineStore
 }
 
+const trafficStatsCacheTTL = time.Hour
+
 func NewCloudflareAnalyticsService(cfg CloudflareAnalyticsConfig, cache TrafficCache, baseline TrafficBaselineStore) *CloudflareAnalyticsService {
 	return &CloudflareAnalyticsService{
 		cfg: cfg,
@@ -68,7 +70,7 @@ func (s *CloudflareAnalyticsService) TrafficStats(ctx context.Context, trafficRa
 		return models.TrafficStats{}, err
 	}
 	if s.cache != nil {
-		_ = s.cache.Set(ctx, cacheKey, stats, 5*time.Minute)
+		_ = s.cache.Set(ctx, cacheKey, stats, trafficStatsCacheTTL)
 	}
 	return stats, nil
 }

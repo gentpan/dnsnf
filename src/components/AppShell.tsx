@@ -46,6 +46,7 @@ const trafficRanges: Array<{ value: TrafficRange; label: string }> = [
   { value: '30d', label: '30d' },
   { value: 'total', label: 'Total' },
 ]
+const trafficStatsRefreshMs = 60 * 60 * 1000
 
 export function AppShell() {
   const [trafficRange, setTrafficRange] = React.useState<TrafficRange>('24h')
@@ -59,8 +60,9 @@ export function AppShell() {
   const traffic = useQuery({
     queryKey: ['traffic-stats', trafficRange],
     queryFn: () => api.trafficStats(trafficRange),
-    refetchInterval: 300_000,
-    staleTime: 240_000,
+    refetchInterval: trafficStatsRefreshMs,
+    refetchOnWindowFocus: false,
+    staleTime: trafficStatsRefreshMs,
     retry: 1,
   })
   const healthPayload = health.data?.payload
