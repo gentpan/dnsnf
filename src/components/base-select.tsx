@@ -55,7 +55,7 @@ export function Select({
                   <BaseSelect.ItemIndicator className="text-zinc-950">
                     <Check className="h-4 w-4" />
                   </BaseSelect.ItemIndicator>
-                  <BaseSelect.ItemText className="min-w-0 truncate leading-5">{option.label}</BaseSelect.ItemText>
+                  <BaseSelect.ItemText className="min-w-0 whitespace-nowrap leading-5">{option.label}</BaseSelect.ItemText>
                 </BaseSelect.Item>
               ))}
             </BaseSelect.List>
