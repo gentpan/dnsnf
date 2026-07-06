@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
-import { Loader2, LockKeyhole, Search, XCircle } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Loader2, LockKeyhole, Search, XCircle } from 'lucide-react'
 import { api, type DnsRecordType, type DnsResolver } from '@/lib/api'
 import { getRelatedArticles, type BlogArticle } from '@/lib/blog'
 import { Select } from './base-select'
@@ -22,6 +22,7 @@ const rdnsModeOptions = [
   { value: 'left', label: 'Starts with' },
   { value: 'right', label: 'Ends with' },
 ]
+const pageSizeOptions = [50, 100, 200, 500].map((value) => ({ value: String(value), label: `${value} / page` }))
 
 export function PageTitle({ title, body }: { title: string; body: string }) {
   return (
@@ -197,19 +198,47 @@ function DnsResult({
 export function ReverseIpPanel() {
   const [ip, setIp] = React.useState('')
   const [submitted, setSubmitted] = React.useState('')
+  const [page, setPage] = React.useState(1)
+  const [pageSize, setPageSize] = React.useState(100)
   const query = useQuery({ queryKey: ['reverse-ip', submitted], queryFn: () => api.reverseIp(submitted), enabled: !!submitted })
+  const rows = React.useMemo(
+    () => query.data?.data.domains.map((row) => ({ name: row.domain || '', detail: row.sources.join(', ') })) || [],
+    [query.data],
+  )
+
+  React.useEffect(() => {
+    setPage(1)
+  }, [submitted, pageSize])
+
   return (
-    <GenericRowsPanel
-      value={ip}
-      setValue={setIp}
-      submit={() => setSubmitted(ip.trim())}
-      placeholder="8.8.8.8"
-      button="Search"
-      loading={query.isFetching}
-      error={query.error}
-      rows={query.data?.data.domains.map((row) => ({ name: row.domain || '', detail: row.sources.join(', ') })) || []}
-      empty="Search an IPv4 address to find domains observed on the same server."
-    />
+    <div className="space-y-5">
+      <Card>
+        <CardContent>
+          <form
+            className="grid gap-3 sm:grid-cols-[1fr_auto]"
+            onSubmit={(event) => {
+              event.preventDefault()
+              setSubmitted(ip.trim())
+            }}
+          >
+            <Input value={ip} onChange={(event) => setIp(event.target.value)} placeholder="8.8.8.8" />
+            <Button>
+              <Search className="h-4 w-4" />
+              Search
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+      {renderQueryState(query.isFetching, query.error)}
+      <PaginatedRows
+        rows={rows}
+        empty="Search an IPv4 address to find domains observed on the same server."
+        page={page}
+        pageSize={pageSize}
+        setPage={setPage}
+        setPageSize={setPageSize}
+      />
+    </div>
   )
 }
 
@@ -420,6 +449,95 @@ function Rows({ rows, empty }: { rows: Array<{ name: string; detail: string }>; 
               <div className="truncate text-sm text-zinc-500 sm:text-right">{row.detail}</div>
             </div>
           ))}
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
+function PaginatedRows({
+  rows,
+  empty,
+  page,
+  pageSize,
+  setPage,
+  setPageSize,
+}: {
+  rows: Array<{ name: string; detail: string }>
+  empty: string
+  page: number
+  pageSize: number
+  setPage: (page: number) => void
+  setPageSize: (pageSize: number) => void
+}) {
+  if (rows.length === 0) return <EmptyState title="No rows yet" body={empty} />
+
+  const totalPages = Math.max(1, Math.ceil(rows.length / pageSize))
+  const currentPage = Math.min(page, totalPages)
+  const start = (currentPage - 1) * pageSize
+  const end = Math.min(start + pageSize, rows.length)
+  const visibleRows = rows.slice(start, end)
+
+  return (
+    <Card>
+      <CardHeader className="flex flex-col gap-3 bg-zinc-50/60 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <div className="text-sm font-medium">Results</div>
+          <div className="mt-1 text-xs text-zinc-500">
+            Showing {start + 1}-{end} of {rows.length} rows
+          </div>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <Select
+            value={String(pageSize)}
+            onValueChange={(next) => setPageSize(Number(next))}
+            options={pageSizeOptions}
+            ariaLabel="Rows per page"
+            className="h-8 min-w-32 text-xs"
+          />
+          <Badge>
+            Page {currentPage} / {totalPages}
+          </Badge>
+        </div>
+      </CardHeader>
+      <CardContent className="p-0">
+        <div className="divide-y divide-zinc-100">
+          {visibleRows.map((row) => (
+            <div
+              key={`${row.name}-${row.detail}`}
+              className="grid gap-1 p-4 transition hover:bg-zinc-50/80 sm:grid-cols-[1fr_260px] sm:items-center"
+            >
+              <div className="min-w-0 truncate font-mono text-sm text-zinc-900">{row.name}</div>
+              <div className="truncate text-sm text-zinc-500 sm:text-right">{row.detail}</div>
+            </div>
+          ))}
+        </div>
+        <div className="flex flex-col gap-3 border-t border-zinc-100 p-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="text-xs text-zinc-500">
+            Results are paginated in the browser. Changing pages does not run a new query.
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={currentPage <= 1}
+              onClick={() => setPage(Math.max(1, currentPage - 1))}
+            >
+              <ChevronLeft className="h-4 w-4" />
+              Prev
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={currentPage >= totalPages}
+              onClick={() => setPage(Math.min(totalPages, currentPage + 1))}
+            >
+              Next
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       </CardContent>
     </Card>
