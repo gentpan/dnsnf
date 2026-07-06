@@ -2,6 +2,7 @@ import { createFileRoute, Link, notFound } from '@tanstack/react-router'
 import { ArrowLeft } from 'lucide-react'
 import { Badge, Card, CardContent, CardHeader } from '@/components/ui'
 import { blogArticles, getBlogArticle, getRelatedArticles } from '@/lib/blog'
+import { seoMeta } from '@/lib/seo'
 
 export const Route = createFileRoute('/blog/$slug')({
   loader: ({ params }) => {
@@ -12,11 +13,11 @@ export const Route = createFileRoute('/blog/$slug')({
   head: ({ loaderData }) => {
     const article = loaderData ?? blogArticles[0]!
     return {
-      meta: [
-        { title: `${article.title} | DNS.NF Blog` },
-        { name: 'description', content: article.description },
-        { name: 'keywords', content: article.keywords.join(', ') },
-      ],
+      meta: seoMeta({
+        title: `${article.title} | DNS.NF Blog`,
+        description: article.description,
+        keywords: article.keywords,
+      }),
     }
   },
   component: BlogArticlePage,

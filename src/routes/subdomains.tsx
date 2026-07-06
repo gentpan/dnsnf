@@ -1,7 +1,16 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { PageTitle, RelatedGuides, SubdomainPanel, UsageGuide } from '@/components/QueryPanels'
+import { seoMeta } from '@/lib/seo'
 
 export const Route = createFileRoute('/subdomains')({
+  head: () => ({
+    meta: seoMeta({
+      title: 'Subdomain Finder - Discover Public Subdomains | DNS.NF',
+      description:
+        'Find public subdomains for a root domain with DNS.NF. Use passive DNS and public source labels to support asset inventory and exposure review.',
+      keywords: ['subdomain finder', 'subdomain discovery', 'find subdomains', '子域名查询', '子域名发现'],
+    }),
+  }),
   component: Page,
 })
 

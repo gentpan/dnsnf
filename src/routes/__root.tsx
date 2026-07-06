@@ -2,6 +2,7 @@ import { QueryClientProvider, type QueryClient } from '@tanstack/react-query'
 import { HeadContent, Scripts, createRootRouteWithContext } from '@tanstack/react-router'
 import appCss from '../styles.css?url'
 import { AppShell } from '@/components/AppShell'
+import { seoKeywords } from '@/lib/seo'
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
   head: () => ({
@@ -10,12 +11,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: 'viewport', content: 'width=device-width, initial-scale=1' },
       {
         name: 'description',
-        content: 'DNS.NF is a fast DNS lookup and infrastructure discovery toolkit.',
+        content:
+          'DNS.NF is a fast DNS lookup, reverse DNS, reverse IP, subdomain discovery, DNSSEC, and public DNS API toolkit for domain and infrastructure intelligence.',
       },
       {
         name: 'keywords',
-        content:
-          'DNS lookup, DNS checker, DNS records, DNS query, DNS propagation, nslookup, dig DNS, reverse DNS lookup, rDNS lookup, reverse IP lookup, subdomain finder, DNSSEC checker, MX lookup, TXT lookup, SPF check, DMARC check, CNAME lookup, A record lookup, AAAA record lookup, 域名解析, DNS查询, DNS查找, DNS记录查询, DNS检测, DNS解析查询, 域名DNS查询, DNS传播检测, nslookup查询, dig查询, 反向DNS查询, PTR查询, 反向IP查询, 子域名查询, DNSSEC检测, MX记录查询, TXT记录查询, SPF查询, DMARC查询',
+        content: seoKeywords.join(', '),
       },
       { name: 'theme-color', content: '#09090b' },
       { name: 'msapplication-TileColor', content: '#09090b' },

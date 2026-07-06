@@ -1,7 +1,16 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { PageTitle, RdnsSearchPanel, RelatedGuides, UsageGuide } from '@/components/QueryPanels'
+import { seoMeta } from '@/lib/seo'
 
 export const Route = createFileRoute('/rdns')({
+  head: () => ({
+    meta: seoMeta({
+      title: 'rDNS Search - Reverse DNS and PTR Record Lookup | DNS.NF',
+      description:
+        'Search reverse DNS and PTR records by keyword with DNS.NF. Map IP addresses to hostnames and inspect infrastructure naming patterns.',
+      keywords: ['rDNS search', 'reverse DNS lookup', 'PTR record lookup', '反向DNS查询', 'PTR记录查询'],
+    }),
+  }),
   component: Page,
 })
 

@@ -1,7 +1,16 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { PageTitle, RelatedGuides, SharedPanel, UsageGuide } from '@/components/QueryPanels'
+import { seoMeta } from '@/lib/seo'
 
 export const Route = createFileRoute('/reverse-ns')({
+  head: () => ({
+    meta: seoMeta({
+      title: 'Reverse NS Lookup - Find Domains Sharing Nameservers | DNS.NF',
+      description:
+        'Discover domains that share authoritative nameserver infrastructure with a target domain using DNS.NF reverse NS lookup.',
+      keywords: ['reverse NS lookup', 'shared nameservers', 'nameserver lookup', '反向NS查询', '共享NS查询'],
+    }),
+  }),
   component: Page,
 })
 

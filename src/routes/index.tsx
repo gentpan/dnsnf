@@ -1,7 +1,16 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { LookupPanel, PageTitle, RelatedGuides, UsageGuide } from '@/components/QueryPanels'
+import { seoMeta } from '@/lib/seo'
 
 export const Route = createFileRoute('/')({
+  head: () => ({
+    meta: seoMeta({
+      title: 'DNS.NF - DNS Lookup, Reverse DNS, Reverse IP, Subdomain Finder',
+      description:
+        'Run fast DNS lookups for A, AAAA, MX, NS, TXT, SOA, CAA, and PTR records, plus reverse DNS, reverse IP, subdomain discovery, and DNSSEC checks.',
+      keywords: ['DNS.NF', 'DNS lookup tool', 'DNS checker online', '域名解析工具', 'DNS在线查询'],
+    }),
+  }),
   component: Home,
 })
 

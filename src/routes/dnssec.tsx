@@ -1,7 +1,16 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { DnssecPanel, PageTitle, RelatedGuides, UsageGuide } from '@/components/QueryPanels'
+import { seoMeta } from '@/lib/seo'
 
 export const Route = createFileRoute('/dnssec')({
+  head: () => ({
+    meta: seoMeta({
+      title: 'DNSSEC Checker - DS, DNSKEY, RRSIG, NSEC Records | DNS.NF',
+      description:
+        'Check DNSSEC records for a domain with DNS.NF. Inspect DS, DNSKEY, RRSIG, and NSEC records and review DNSSEC posture.',
+      keywords: ['DNSSEC checker', 'DS record lookup', 'DNSKEY lookup', 'RRSIG lookup', 'DNSSEC检测'],
+    }),
+  }),
   component: Page,
 })
 

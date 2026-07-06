@@ -1,88 +1,164 @@
-import * as React from 'react'
-import { createFileRoute } from '@tanstack/react-router'
-import { Tabs } from '@/components/base-tabs'
-import { Card, CardContent, CardHeader, StatusBadge } from '@/components/ui'
+import { createFileRoute, Link } from '@tanstack/react-router'
+import { BookOpen, Database, Globe2, Layers3, Search, ShieldCheck } from 'lucide-react'
+import { Badge, Card, CardContent, CardHeader } from '@/components/ui'
 import { PageTitle } from '@/components/QueryPanels'
+import { seoMeta } from '@/lib/seo'
 
 export const Route = createFileRoute('/docs')({
+  head: () => ({
+    meta: seoMeta({
+      title: 'DNS.NF Docs - DNS Lookup, Reverse DNS, Subdomain, DNSSEC Guide',
+      description:
+        'DNS.NF documentation for using DNS lookup, reverse DNS, reverse IP, subdomain discovery, reverse NS, reverse MX, DNSSEC, result interpretation, and public data limits.',
+      keywords: ['DNS.NF docs', 'DNS documentation', 'DNS lookup help', 'DNS工具文档', 'DNS查询说明'],
+    }),
+  }),
   component: Page,
 })
 
-const endpoints = [
-  ['GET', '/v1/dns/lookup?domain=example.com&type=ALL'],
-  ['GET', '/v1/dns/lookup?ip=8.8.8.8&type=RDNS'],
-  ['GET', '/v1/dns/reverse-ip?ip=8.8.8.8'],
-  ['GET', '/v1/dns/subdomains?domain=example.com'],
-  ['GET', '/v1/dns/reverse-ns?domain=example.com'],
-  ['GET', '/v1/dns/reverse-mx?domain=example.com'],
-  ['GET', '/v1/dns/rdns?keyword=google&mode=middle'],
-  ['GET', '/v1/dns/dnssec?domain=example.com'],
+const queryDocs = [
+  {
+    title: 'DNS Lookup',
+    href: '/dns-lookup',
+    icon: Search,
+    body: 'Use this for direct DNS record checks, resolver visibility, mail routing review, TXT verification, and quick operational troubleshooting.',
+    tags: ['A', 'AAAA', 'MX', 'NS', 'TXT', 'SOA', 'CAA'],
+  },
+  {
+    title: 'Reverse IP',
+    href: '/reverse-ip',
+    icon: Globe2,
+    body: 'Use this to discover domains observed on the same IPv4 address. Results are useful for shared hosting, infrastructure mapping, and surface review.',
+    tags: ['IPv4', 'Shared Hosting', 'Passive Data'],
+  },
+  {
+    title: 'Subdomains',
+    href: '/subdomains',
+    icon: Layers3,
+    body: 'Use this to collect public subdomain observations under a root domain and build a cleaner asset inventory.',
+    tags: ['Inventory', 'Hostnames', 'Sources'],
+  },
+  {
+    title: 'Reverse NS / MX',
+    href: '/reverse-ns',
+    icon: Database,
+    body: 'Use these tools to find domains sharing authoritative nameservers or mail exchangers with a target domain.',
+    tags: ['Nameservers', 'Mail Routing', 'Overlap'],
+  },
+  {
+    title: 'rDNS Search',
+    href: '/rdns',
+    icon: BookOpen,
+    body: 'Use rDNS search to match PTR names by keyword and map host naming patterns back to observed IP addresses.',
+    tags: ['PTR', 'Hostname', 'Keyword'],
+  },
+  {
+    title: 'DNSSEC',
+    href: '/dnssec',
+    icon: ShieldCheck,
+    body: 'Use DNSSEC checks to inspect DS, DNSKEY, RRSIG, and NSEC records and understand whether a domain has DNSSEC coverage.',
+    tags: ['DS', 'DNSKEY', 'RRSIG', 'NSEC'],
+  },
+]
+
+const recordDocs = [
+  ['A / AAAA', 'Maps a domain to IPv4 or IPv6 addresses. Use it to confirm website and service routing.'],
+  ['CNAME', 'Shows alias targets. Use it to understand hosted services, CDN targets, and chained names.'],
+  ['MX', 'Shows mail exchangers and priority. Use it to debug email routing and provider configuration.'],
+  ['NS', 'Shows authoritative nameservers. Use it to confirm delegation and DNS hosting.'],
+  ['TXT', 'Stores verification and policy text, including SPF, DMARC, DKIM selectors, and ownership checks.'],
+  ['SOA', 'Shows zone authority metadata such as primary nameserver, serial, refresh, retry, and expiry values.'],
+  ['CAA', 'Limits which certificate authorities may issue TLS certificates for a domain.'],
+  ['PTR', 'Maps IP addresses back to hostnames. Use it for reverse DNS and infrastructure naming review.'],
+]
+
+const faq = [
+  ['Why can results differ from another DNS tool?', 'DNS answers can vary by resolver, cache timing, geography, delegation changes, and public data source coverage.'],
+  ['Are empty results always proof that a record does not exist?', 'No. Empty results mean DNS.NF did not receive a usable public answer for that query and record type at that time.'],
+  ['Does DNS.NF require an API key?', 'The public API does not require an API key and is rate limited to 60 requests per minute per client.'],
+  ['What data does DNS.NF query?', 'DNS.NF uses live DNS queries plus public/passive datasets for discovery-style features such as reverse IP and subdomain search.'],
 ]
 
 function Page() {
-  const [tab, setTab] = React.useState('public')
-  const publicPanel = <EndpointTable endpoints={endpoints} />
-  const internalPanel = (
-    <EndpointTable
-      endpoints={[
-        ['GET', '/v2/dns/history?domain=example.com'],
-        ['POST', '/v2/dns/history'],
-        ['POST', '/v2/dns/rdns-records'],
-      ]}
-      tone="amber"
-    />
-  )
-  const examplesPanel = (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between bg-zinc-50/60">
-        <div className="text-sm font-medium">Examples</div>
-        <StatusBadge tone="zinc">curl</StatusBadge>
-      </CardHeader>
-      <CardContent>
-        <pre className="overflow-auto rounded-md bg-zinc-950 p-4 text-xs leading-6 text-zinc-50">
-{`curl "http://localhost:8080/v1/dns/lookup?domain=cloudflare.com&type=ALL"
-curl "http://localhost:8080/v1/dns/reverse-ip?ip=8.8.8.8"
-curl "http://localhost:8080/v1/dns/dnssec?domain=example.com"`}
-        </pre>
-      </CardContent>
-    </Card>
-  )
-
   return (
-    <>
-      <PageTitle title="API Docs" body="Public endpoints are served by the Go API. Internal write endpoints remain under /v2 and require a token." />
-      <Tabs
-        value={tab}
-        onValueChange={setTab}
-        tabs={[
-          { value: 'public', label: 'Public', content: publicPanel },
-          { value: 'internal', label: 'Internal', content: internalPanel },
-          { value: 'examples', label: 'Examples', content: examplesPanel },
-        ]}
+    <div className="space-y-6">
+      <PageTitle
+        title="DNS.NF Docs"
+        body="Practical guidance for choosing the right DNS query, reading results, and understanding public data limits."
       />
-    </>
-  )
-}
 
-function EndpointTable({ endpoints, tone = 'blue' }: { endpoints: string[][]; tone?: 'blue' | 'amber' }) {
-  return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between bg-zinc-50/60">
-        <div className="text-sm font-medium">{tone === 'blue' ? 'Public endpoints' : 'Internal endpoints'}</div>
-        <StatusBadge tone={tone === 'blue' ? 'green' : 'amber'}>{tone === 'blue' ? 'v1' : 'v2'}</StatusBadge>
-      </CardHeader>
-      <CardContent className="p-0">
-        <div className="divide-y divide-zinc-100">
-          {endpoints.map(([method, path]) => (
-            <div key={path} className="grid gap-2 p-4 transition hover:bg-zinc-50/80 sm:grid-cols-[80px_1fr]">
-              <StatusBadge tone={tone} className="w-fit font-mono">
-                {method}
-              </StatusBadge>
-              <div className="overflow-auto font-mono text-sm">{path}</div>
+      <Card>
+        <CardHeader className="bg-zinc-50/60">
+          <div className="text-sm font-medium">Choose A Query</div>
+          <div className="mt-1 text-xs leading-5 text-zinc-500">Start from the question you are trying to answer.</div>
+        </CardHeader>
+        <CardContent className="grid gap-3">
+          {queryDocs.map((item) => {
+            const Icon = item.icon
+            return (
+              <Link
+                key={item.title}
+                to={item.href}
+                className="block rounded-lg border border-zinc-200 bg-white p-4 transition hover:border-zinc-300 hover:bg-zinc-50"
+              >
+                <div className="flex flex-wrap items-center gap-2">
+                  <Icon className="h-4 w-4 text-sky-600" />
+                  <h2 className="text-sm font-semibold tracking-normal text-zinc-950">{item.title}</h2>
+                </div>
+                <p className="mt-2 text-sm leading-6 text-zinc-600">{item.body}</p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {item.tags.map((tag) => (
+                    <Badge key={tag}>{tag}</Badge>
+                  ))}
+                </div>
+              </Link>
+            )
+          })}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="bg-zinc-50/60">
+          <div className="text-sm font-medium">Record Types</div>
+          <div className="mt-1 text-xs leading-5 text-zinc-500">Common DNS records and what they usually mean.</div>
+        </CardHeader>
+        <CardContent className="grid gap-3">
+          {recordDocs.map(([name, body]) => (
+            <div key={name} className="rounded-lg border border-zinc-200 bg-white p-4">
+              <div className="font-mono text-sm font-medium text-zinc-950">{name}</div>
+              <p className="mt-2 text-sm leading-6 text-zinc-600">{body}</p>
             </div>
           ))}
-        </div>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="bg-zinc-50/60">
+          <div className="text-sm font-medium">Result Notes</div>
+        </CardHeader>
+        <CardContent className="grid gap-3">
+          <p className="text-sm leading-6 text-zinc-600">
+            DNS.NF is designed for public DNS visibility. Discovery results are best-effort and can be incomplete, delayed, or different from private resolver views.
+          </p>
+          <p className="text-sm leading-6 text-zinc-600">
+            For automation, use the dedicated <Link to="/api" className="font-medium text-zinc-950 underline underline-offset-4">Public API</Link> page. It contains request builders, response examples, and language snippets.
+          </p>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="bg-zinc-50/60">
+          <div className="text-sm font-medium">FAQ</div>
+        </CardHeader>
+        <CardContent className="grid gap-3">
+          {faq.map(([question, answer]) => (
+            <div key={question} className="rounded-lg border border-zinc-200 bg-white p-4">
+              <div className="text-sm font-semibold tracking-normal text-zinc-950">{question}</div>
+              <p className="mt-2 text-sm leading-6 text-zinc-600">{answer}</p>
+            </div>
+          ))}
+        </CardContent>
+      </Card>
+    </div>
   )
 }

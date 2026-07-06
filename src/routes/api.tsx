@@ -18,16 +18,16 @@ import {
 import { Select } from '@/components/base-select'
 import { Tabs } from '@/components/base-tabs'
 import { Badge, Button, Card, CardContent, CardHeader, Input, StatusBadge } from '@/components/ui'
+import { seoMeta } from '@/lib/seo'
 
 export const Route = createFileRoute('/api')({
   head: () => ({
-    meta: [
-      { title: 'DNS.NF Public API' },
-      {
-        name: 'description',
-        content: 'Public DNS.NF API reference for DNS lookup, reverse IP, rDNS, subdomains, DNSSEC, and DNS history.',
-      },
-    ],
+    meta: seoMeta({
+      title: 'DNS.NF Public API - DNS Lookup API, Reverse IP API, DNSSEC API',
+      description:
+        'Use the DNS.NF Public API at https://api.dns.nf for DNS lookup, reverse IP, subdomain discovery, reverse NS, reverse MX, rDNS, and DNSSEC checks.',
+      keywords: ['DNS API', 'public DNS API', 'DNS lookup API', 'reverse IP API', 'DNSSEC API', 'DNS查询API'],
+    }),
   }),
   component: PublicApiPage,
 })

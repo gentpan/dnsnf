@@ -1,22 +1,36 @@
 # DNS.NF
 
-DNS.NF is a DNS lookup and infrastructure discovery toolkit for checking public DNS records, reverse DNS data, shared infrastructure, and DNSSEC status.
+DNS.NF is a fast DNS lookup, reverse DNS, reverse IP, subdomain discovery, DNSSEC, and public DNS API platform for domain and infrastructure intelligence.
 
 - Website: https://dns.nf
 - Public API: https://api.dns.nf
 - Repository: https://github.com/gentpan/dnsnf
 
+## Overview
+
+DNS.NF helps developers, operators, security researchers, and domain owners inspect public DNS data from a clean web console and a simple HTTP API.
+
+The frontend is built with TanStack Start, React, TanStack Query, and Base UI/shadcn-style components. The backend is a Go API using pgx, Redis, PostgreSQL, and miekg/dns.
+
+## Keywords
+
+DNS lookup, DNS checker, DNS records, DNS query, DNS propagation, DNS resolver, nslookup, dig DNS, A record lookup, AAAA record lookup, CNAME lookup, MX lookup, NS lookup, TXT lookup, SOA lookup, CAA lookup, PTR lookup, SPF check, DMARC check, reverse DNS lookup, rDNS lookup, reverse IP lookup, subdomain finder, subdomain discovery, reverse NS lookup, reverse MX lookup, DNSSEC checker, DNS API, public DNS API, domain intelligence, infrastructure discovery.
+
+域名解析, DNS查询, DNS查找, DNS记录查询, DNS检测, DNS解析查询, 域名DNS查询, DNS传播检测, nslookup查询, dig查询, A记录查询, AAAA记录查询, CNAME查询, MX记录查询, NS记录查询, TXT记录查询, SOA记录查询, CAA记录查询, PTR查询, SPF查询, DMARC查询, 反向DNS查询, rDNS查询, 反向IP查询, 子域名查询, 反向NS查询, 反向MX查询, DNSSEC检测, DNS API接口, 域名情报, 基础设施发现.
+
 ## Features
 
-- DNS lookup for `A`, `AAAA`, `CNAME`, `MX`, `NS`, `TXT`, `SOA`, `CAA`, and `ALL`
+- DNS lookup for `A`, `AAAA`, `CNAME`, `MX`, `NS`, `TXT`, `SOA`, `CAA`, `SRV`, `PTR`, and `ALL`
 - Reverse DNS and PTR lookup for IPv4 targets and small CIDR ranges
 - Reverse IP discovery for domains observed on the same IPv4 address
 - Subdomain discovery with public source labels
-- Reverse NS and Reverse MX discovery for shared infrastructure analysis
+- Reverse NS lookup for shared authoritative nameserver infrastructure
+- Reverse MX lookup for shared mail exchanger infrastructure
+- rDNS keyword search for PTR hostname patterns
 - DNSSEC inspection for DS, DNSKEY, RRSIG, NSEC, and related records
-- Public API reference with interactive request examples
-- Blog guides under `/blog` for explaining query purpose and result interpretation
-- Request counters, API health latency indicator, and Umami analytics integration
+- Public API page with request builder, Send button, response preview, and language examples
+- Blog guides for query purpose, DNS record interpretation, and operational usage
+- API health latency indicator, request counters, favicon set, sitemap-friendly routes, and Umami analytics scripts
 
 ## Tech Stack
 
@@ -30,6 +44,7 @@ DNS.NF is a DNS lookup and infrastructure discovery toolkit for checking public 
 - shadcn/ui-style components
 - Tailwind CSS 4
 - Vite
+- Nitro runtime
 
 ### Backend
 
@@ -37,31 +52,35 @@ DNS.NF is a DNS lookup and infrastructure discovery toolkit for checking public 
 - pgx
 - Redis
 - miekg/dns
+- PostgreSQL
 - Prometheus metrics
 
-### Data & Deployment
+### Deployment
 
-- PostgreSQL
-- Redis
 - Docker / Docker Compose
-- Caddy or any reverse proxy in production
+- Caddy or another reverse proxy
+- Frontend Node server built to `.output/server/index.mjs`
+- Go API service behind `api.dns.nf`
 
 ## Project Structure
 
 ```text
 .
-├── src/                  # TanStack Start frontend
-│   ├── components/       # App shell, query panels, UI components
-│   ├── lib/              # API client, blog content, helpers
-│   └── routes/           # File-based routes
-├── public/               # Logo, favicon set, manifest
-├── backend/              # Go API server
-│   ├── cmd/server/       # API entrypoint
-│   ├── internal/         # Handlers, middleware, services, repository
+├── src/
+│   ├── components/       # App shell, query panels, UI primitives
+│   ├── lib/              # API client, blog content, SEO helpers
+│   └── routes/           # TanStack Router file routes
+├── public/               # Logo, favicon set, browser config, manifest
+├── backend/
+│   ├── cmd/server/       # Go API entrypoint
+│   ├── internal/         # Handlers, middleware, models, repository, services
 │   └── migrations/       # PostgreSQL schema
+├── nuxt-assets-legacy/   # Archived Nuxt-era static assets
+├── nuxt-server-legacy/   # Archived Nuxt server routes/utilities
 ├── Dockerfile            # Frontend production image
-├── docker-compose.yml    # Full local stack
-└── package.json          # Frontend scripts and dependencies
+├── docker-compose.yml    # Local full stack
+├── package.json          # Frontend scripts and dependencies
+└── vite.config.ts        # TanStack Start / Vite configuration
 ```
 
 ## Requirements
@@ -109,7 +128,7 @@ Local URLs:
 
 ## Docker
 
-Run the full stack locally:
+Run the full local stack:
 
 ```bash
 docker compose up -d --build
@@ -135,17 +154,19 @@ CORS_ALLOWED_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
 INTERNAL_TOKEN=change-me
 ```
 
-## Frontend Commands
+## Commands
+
+Frontend:
 
 ```bash
-pnpm dev              # Start local dev server
-pnpm generate-routes  # Regenerate TanStack Router route tree
-pnpm test             # Type-check
-pnpm build            # Build production output
-pnpm preview          # Preview production build
+pnpm dev
+pnpm generate-routes
+pnpm test
+pnpm build
+pnpm preview
 ```
 
-## Backend Commands
+Backend:
 
 ```bash
 cd backend
@@ -161,10 +182,10 @@ Production base URL:
 https://api.dns.nf
 ```
 
-Public API rate limit:
+Public rate limit:
 
 ```text
-60 requests per minute
+60 requests per minute per client
 ```
 
 ### Health
@@ -207,7 +228,7 @@ curl "https://api.dns.nf/v1/dns/stats/overview"
 
 ## API Response Shape
 
-Most API responses use this shape:
+Successful responses generally follow this structure:
 
 ```json
 {
@@ -217,7 +238,7 @@ Most API responses use this shape:
 }
 ```
 
-Rate-limited requests return:
+Rate-limited responses use:
 
 ```json
 {
@@ -226,21 +247,39 @@ Rate-limited requests return:
 }
 ```
 
+## Pages
+
+- `/` - main DNS lookup console
+- `/dns-lookup` - focused DNS record lookup
+- `/reverse-ip` - reverse IP discovery
+- `/subdomains` - subdomain discovery
+- `/reverse-ns` - shared nameserver discovery
+- `/reverse-mx` - shared mail infrastructure discovery
+- `/rdns` - PTR/rDNS keyword search
+- `/dnssec` - DNSSEC record inspection
+- `/api` - professional public API reference and request console
+- `/docs` - product usage documentation and result interpretation
+- `/blog` - DNS guides and query explanations
+
+## SEO Metadata
+
+The app defines shared SEO keywords in `src/lib/seo.ts` and route-level titles/descriptions for each major page. The root document also includes favicon, manifest, theme color, Open Graph, Twitter card, and Umami analytics scripts.
+
 ## Production Notes
 
-The production frontend is built with TanStack Start and served by Node from `.output/server/index.mjs`.
-
-A typical production setup:
+Recommended production layout:
 
 ```text
 dns.nf      -> reverse proxy -> frontend Node server
 api.dns.nf  -> reverse proxy -> Go API server
 ```
 
-Recommended service ports:
+Current production service pattern:
 
-- Frontend: `3010` behind reverse proxy
-- API: `18085` behind reverse proxy
+- Frontend: Node server on an internal port such as `3010`
+- API: Go server on an internal port such as `18085`
+- Reverse proxy: Caddy or equivalent TLS proxy
+- Data: PostgreSQL and Redis
 
 ## License
 

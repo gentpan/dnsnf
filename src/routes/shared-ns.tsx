@@ -1,7 +1,16 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { PageTitle, RelatedGuides, SharedPanel, UsageGuide } from '@/components/QueryPanels'
+import { seoMeta } from '@/lib/seo'
 
 export const Route = createFileRoute('/shared-ns')({
+  head: () => ({
+    meta: seoMeta({
+      title: 'Shared NS Lookup - Nameserver Infrastructure Discovery | DNS.NF',
+      description:
+        'Find domains that share authoritative NS infrastructure with a target domain and verify nameserver overlap with DNS.NF.',
+      keywords: ['shared NS lookup', 'reverse NS lookup', 'nameserver discovery', '共享NS查询'],
+    }),
+  }),
   component: Page,
 })
 

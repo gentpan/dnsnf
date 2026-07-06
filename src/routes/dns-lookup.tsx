@@ -1,7 +1,16 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { LookupPanel, PageTitle, RelatedGuides, UsageGuide } from '@/components/QueryPanels'
+import { seoMeta } from '@/lib/seo'
 
 export const Route = createFileRoute('/dns-lookup')({
+  head: () => ({
+    meta: seoMeta({
+      title: 'DNS Lookup - Check A, AAAA, MX, NS, TXT, SOA, CAA Records | DNS.NF',
+      description:
+        'Check DNS records online with DNS.NF. Query A, AAAA, CNAME, MX, NS, TXT, SOA, CAA, SRV, PTR, and ALL records from one clean DNS lookup console.',
+      keywords: ['DNS lookup', 'DNS records lookup', 'A record lookup', 'MX lookup', 'TXT lookup', 'DNS记录查询'],
+    }),
+  }),
   component: Page,
 })
 

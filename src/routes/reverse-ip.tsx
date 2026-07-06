@@ -1,7 +1,16 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { PageTitle, RelatedGuides, ReverseIpPanel, UsageGuide } from '@/components/QueryPanels'
+import { seoMeta } from '@/lib/seo'
 
 export const Route = createFileRoute('/reverse-ip')({
+  head: () => ({
+    meta: seoMeta({
+      title: 'Reverse IP Lookup - Find Domains on the Same IP | DNS.NF',
+      description:
+        'Use DNS.NF reverse IP lookup to find domains observed on the same IPv4 address and investigate shared hosting, infrastructure, and domain relationships.',
+      keywords: ['reverse IP lookup', 'same IP domains', 'IP domain lookup', '反向IP查询', '同IP域名查询'],
+    }),
+  }),
   component: Page,
 })
 
