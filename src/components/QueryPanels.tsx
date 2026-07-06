@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
-import { Check, ChevronLeft, ChevronRight, Clipboard, House, LockKeyhole, Search, XCircle } from 'lucide-react'
+import { Check, ChevronDown, ChevronLeft, ChevronRight, Clipboard, House, LockKeyhole, Search, XCircle } from 'lucide-react'
 import { api, type DnsRecordType, type DnsResolver } from '@/lib/api'
 import { getRelatedArticles, type BlogArticle } from '@/lib/blog'
 import { Select } from './base-select'
@@ -129,6 +129,28 @@ export function LookupPanel({ initialTarget = '' }: { initialTarget?: string }) 
     option.value === 'local' ? { ...option, detail: localResolverDetail } : option,
   )
   const selectedResolver = lookupResolverOptions.find((option) => option.value === resolver) || lookupResolverOptions[1]!
+  const [resolverMenuOpen, setResolverMenuOpen] = React.useState(false)
+  const resolverMenuRef = React.useRef<HTMLDivElement | null>(null)
+  React.useEffect(() => {
+    if (!resolverMenuOpen) return undefined
+
+    function closeOnOutside(event: MouseEvent) {
+      if (!resolverMenuRef.current?.contains(event.target as Node)) {
+        setResolverMenuOpen(false)
+      }
+    }
+
+    function closeOnEscape(event: KeyboardEvent) {
+      if (event.key === 'Escape') setResolverMenuOpen(false)
+    }
+
+    document.addEventListener('mousedown', closeOnOutside)
+    document.addEventListener('keydown', closeOnEscape)
+    return () => {
+      document.removeEventListener('mousedown', closeOnOutside)
+      document.removeEventListener('keydown', closeOnEscape)
+    }
+  }, [resolverMenuOpen])
   const query = useQuery({
     queryKey: ['lookup', submitted, type, resolver],
     queryFn: () => api.lookup(submitted, type, resolver),
@@ -138,30 +160,55 @@ export function LookupPanel({ initialTarget = '' }: { initialTarget?: string }) 
   return (
     <div className="space-y-5">
       <Card className="overflow-hidden">
-        <CardHeader className="space-y-3 bg-zinc-50/70">
+        <CardHeader className="bg-zinc-50/70">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-2 text-sm font-medium">
               <Search className="h-4 w-4 text-sky-600" />
               Query target
             </div>
-            <Badge className="hidden max-w-[min(22rem,60vw)] gap-1 truncate sm:inline-flex">
-              <span>{selectedResolver.label}</span>
-              <span className="text-zinc-400">/</span>
-              <span className="truncate font-mono">{selectedResolver.detail}</span>
-            </Badge>
-          </div>
-          <div className="grid grid-cols-2 gap-1 rounded-lg border border-zinc-200 bg-white p-1 shadow-sm shadow-zinc-200/40 sm:grid-cols-5">
-            {lookupResolverOptions.map((option) => (
-              <ResolverButton
-                key={option.value}
-                label={option.label}
-                detail={option.detail}
-                icon={option.icon}
-                logoSrc={option.logoSrc}
-                selected={resolver === option.value}
-                onClick={() => setResolver(option.value)}
-              />
-            ))}
+            <div ref={resolverMenuRef} className="relative">
+              <button
+                type="button"
+                onClick={() => setResolverMenuOpen((open) => !open)}
+                className="inline-flex max-w-[min(25rem,62vw)] items-center gap-2 rounded-md border border-zinc-200 bg-white px-2.5 py-2 text-left shadow-sm shadow-zinc-200/40 transition hover:bg-zinc-50"
+                aria-expanded={resolverMenuOpen}
+                aria-label="Select DNS resolver"
+              >
+                <ResolverIcon option={selectedResolver} />
+                <span className="min-w-0">
+                  <span className="block truncate text-xs font-semibold text-zinc-950">{selectedResolver.label}</span>
+                  <span className="mt-0.5 block truncate font-mono text-[10px] text-zinc-500">{selectedResolver.detail}</span>
+                </span>
+                <ChevronDown className="h-4 w-4 shrink-0 text-zinc-400" />
+              </button>
+              {resolverMenuOpen ? (
+                <div className="absolute right-0 top-full z-[1000] mt-2 w-[min(24rem,calc(100vw-2rem))] rounded-lg border border-zinc-200 bg-white p-1 shadow-lg shadow-zinc-900/10">
+                  {lookupResolverOptions.map((option) => (
+                    <button
+                      key={option.value}
+                      type="button"
+                      onClick={() => {
+                        setResolver(option.value)
+                        setResolverMenuOpen(false)
+                      }}
+                      className={[
+                        'flex w-full items-center gap-2 rounded-md px-3 py-2 text-left transition',
+                        resolver === option.value ? 'bg-zinc-950 text-white' : 'text-zinc-600 hover:bg-zinc-50 hover:text-zinc-950',
+                      ].join(' ')}
+                    >
+                      <ResolverIcon option={option} />
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-xs font-semibold">{option.label}</span>
+                        <span className={['mt-0.5 block truncate font-mono text-[10px]', resolver === option.value ? 'text-zinc-300' : 'text-zinc-400'].join(' ')}>
+                          {option.detail}
+                        </span>
+                      </span>
+                      {resolver === option.value ? <Check className="h-4 w-4 shrink-0" /> : null}
+                    </button>
+                  ))}
+                </div>
+              ) : null}
+            </div>
           </div>
         </CardHeader>
         <CardContent>
@@ -193,47 +240,16 @@ export function LookupPanel({ initialTarget = '' }: { initialTarget?: string }) 
   )
 }
 
-function ResolverButton({
-  label,
-  detail,
-  icon: Icon,
-  logoSrc,
-  selected,
-  onClick,
-}: {
-  label: string
-  detail: string
-  icon?: React.ComponentType<{ className?: string }>
-  logoSrc?: string
-  selected: boolean
-  onClick: () => void
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={[
-        'inline-flex min-h-14 items-center justify-start gap-2 rounded-md px-2.5 py-2 text-left transition sm:px-3',
-        selected
-          ? 'bg-zinc-950 text-white shadow-sm'
-          : 'text-zinc-500 hover:bg-zinc-50 hover:text-zinc-950',
-      ].join(' ')}
-    >
-      {logoSrc ? (
-        <span className="inline-flex h-5 w-5 items-center justify-center">
-          <img src={logoSrc} alt="" className="max-h-[18px] max-w-[18px] object-contain" />
-        </span>
-      ) : Icon ? (
-        <Icon className="h-4 w-4 shrink-0" />
-      ) : null}
-      <span className="min-w-0">
-        <span className="block truncate text-xs font-semibold">{label}</span>
-        <span className={['mt-0.5 block truncate font-mono text-[10px]', selected ? 'text-zinc-300' : 'text-zinc-400'].join(' ')}>
-          {detail}
-        </span>
+function ResolverIcon({ option }: { option: (typeof resolverOptions)[number] }) {
+  const Icon = option.icon
+  if (option.logoSrc) {
+    return (
+      <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center">
+        <img src={option.logoSrc} alt="" className="max-h-[18px] max-w-[18px] object-contain" />
       </span>
-    </button>
-  )
+    )
+  }
+  return Icon ? <Icon className="h-4 w-4 shrink-0" /> : null
 }
 
 function DnsResult({
