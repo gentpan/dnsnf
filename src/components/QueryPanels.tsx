@@ -114,25 +114,25 @@ export function LookupPanel({ initialTarget = '' }: { initialTarget?: string }) 
   return (
     <div className="space-y-5">
       <Card className="overflow-hidden">
-        <CardHeader className="flex flex-col gap-3 bg-zinc-50/70 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-2 text-sm font-medium">
-            <Search className="h-4 w-4 text-sky-600" />
-            Query target
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="grid w-full grid-cols-2 gap-1 rounded-lg border border-zinc-200 bg-white p-1 shadow-sm shadow-zinc-200/40 sm:w-auto sm:grid-cols-3 lg:grid-cols-5">
-              {resolverOptions.map((option) => (
-                <ResolverButton
-                  key={option.value}
-                  label={option.label}
-                  icon={option.icon}
-                  logoSrc={option.logoSrc}
-                  selected={resolver === option.value}
-                  onClick={() => setResolver(option.value)}
-                />
-              ))}
+        <CardHeader className="space-y-3 bg-zinc-50/70">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2 text-sm font-medium">
+              <Search className="h-4 w-4 text-sky-600" />
+              Query target
             </div>
-            <Badge>{type}</Badge>
+            <Badge>{resolverOptions.find((option) => option.value === resolver)?.label}</Badge>
+          </div>
+          <div className="grid grid-cols-2 gap-1 rounded-lg border border-zinc-200 bg-white p-1 shadow-sm shadow-zinc-200/40 sm:grid-cols-5">
+            {resolverOptions.map((option) => (
+              <ResolverButton
+                key={option.value}
+                label={option.label}
+                icon={option.icon}
+                logoSrc={option.logoSrc}
+                selected={resolver === option.value}
+                onClick={() => setResolver(option.value)}
+              />
+            ))}
           </div>
         </CardHeader>
         <CardContent>
