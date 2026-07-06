@@ -86,8 +86,7 @@ DNS lookup, DNS checker, DNS records, DNS query, DNS propagation, DNS resolver, 
 │   ├── cmd/server/       # Go API entrypoint
 │   ├── internal/         # Handlers, middleware, models, repository, services
 │   └── migrations/       # PostgreSQL schema
-├── nuxt-assets-legacy/   # Archived Nuxt-era static assets
-├── nuxt-server-legacy/   # Archived Nuxt server routes/utilities
+├── scripts/              # Small local utility scripts
 ├── Dockerfile            # Frontend production image
 ├── docker-compose.yml    # Local full stack
 ├── package.json          # Frontend scripts and dependencies

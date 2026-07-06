@@ -26,7 +26,7 @@ func NewRouter(
 	v2Mux := http.NewServeMux()
 	publicMux := http.NewServeMux()
 
-	// V1 路由 - 对外，有限流 (1分钟30次)
+	// V1 路由 - 对外，有限流 (1分钟60次)
 	v1Mux.HandleFunc("/v1/dns/lookup", dns.LookupDNS)
 	v1Mux.HandleFunc("/v1/dns/history", history.Get)
 	v1Mux.HandleFunc("/v1/dns/rdns", rdns.Search)

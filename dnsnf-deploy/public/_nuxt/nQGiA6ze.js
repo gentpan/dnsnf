@@ -1,1 +1,0 @@
-import{a as r,n as s}from"./DsdCB0p3.js";import{m as n,aw as o,p,n as c}from"./DGAV0uaj.js";import"./DJFR4Wty.js";const d=n({__name:"shared-ns",async setup(_){let e,t;const a=r();return[e,t]=o(()=>s({path:"/reverse-ns",query:{...a.query}},{replace:!0})),await e,t(),(m,u)=>(c(),p("div"))}});export{d as default};
