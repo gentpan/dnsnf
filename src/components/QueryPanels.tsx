@@ -23,7 +23,7 @@ const rdnsModeOptions = [
   { value: 'left', label: 'Starts with' },
   { value: 'right', label: 'Ends with' },
 ]
-const pageSizeOptions = [50, 100, 200, 500].map((value) => ({ value: String(value), label: `${value} / page` }))
+const pageSizeOptions = [50, 100, 200, 500].map((value) => ({ value: String(value), label: String(value) }))
 
 export function PageTitle({
   title,
