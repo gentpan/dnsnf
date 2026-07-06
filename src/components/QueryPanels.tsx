@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
-import { ChevronLeft, ChevronRight, House, Loader2, LockKeyhole, Search, XCircle } from 'lucide-react'
+import { ChevronLeft, ChevronRight, House, LockKeyhole, Search, XCircle } from 'lucide-react'
 import { api, type DnsRecordType, type DnsResolver } from '@/lib/api'
 import { getRelatedArticles, type BlogArticle } from '@/lib/blog'
 import { Select } from './base-select'
@@ -150,8 +150,8 @@ export function LookupPanel({ initialTarget = '' }: { initialTarget?: string }) 
               options={recordTypeOptions}
               ariaLabel="Record type"
             />
-            <Button>
-              <Search className="h-4 w-4" />
+            <Button disabled={query.isFetching}>
+              {query.isFetching ? <LoadingRingIcon className="h-4 w-4" /> : <Search className="h-4 w-4" />}
               Lookup
             </Button>
           </form>
@@ -263,8 +263,8 @@ export function ReverseIpPanel() {
             }}
           >
             <Input value={ip} onChange={(event) => setIp(event.target.value)} placeholder="8.8.8.8" />
-            <Button>
-              <Search className="h-4 w-4" />
+            <Button disabled={query.isFetching}>
+              {query.isFetching ? <LoadingRingIcon className="h-4 w-4" /> : <Search className="h-4 w-4" />}
               Search
             </Button>
           </form>
@@ -356,8 +356,8 @@ export function RdnsSearchPanel() {
       >
         <Input value={keyword} onChange={(event) => setKeyword(event.target.value)} placeholder="google" />
         <Select value={mode} onValueChange={setMode} options={rdnsModeOptions} ariaLabel="Match mode" />
-        <Button>
-          <Search className="h-4 w-4" />
+        <Button disabled={query.isFetching}>
+          {query.isFetching ? <LoadingRingIcon className="h-4 w-4" /> : <Search className="h-4 w-4" />}
           Search
         </Button>
       </form>
@@ -395,8 +395,8 @@ export function DnssecPanel() {
             }}
           >
             <Input value={domain} onChange={(event) => setDomain(event.target.value)} placeholder="example.com" />
-            <Button>
-              <LockKeyhole className="h-4 w-4" />
+            <Button disabled={query.isFetching}>
+              {query.isFetching ? <LoadingRingIcon className="h-4 w-4" /> : <LockKeyhole className="h-4 w-4" />}
               Check DNSSEC
             </Button>
           </form>
@@ -458,8 +458,8 @@ function GenericRowsPanel({
             }}
           >
             <Input value={value} onChange={(event) => setValue(event.target.value)} placeholder={placeholder} />
-            <Button>
-              <Search className="h-4 w-4" />
+            <Button disabled={loading}>
+              {loading ? <LoadingRingIcon className="h-4 w-4" /> : <Search className="h-4 w-4" />}
               {button}
             </Button>
           </form>
@@ -614,10 +614,11 @@ function hasRecordValue(value: unknown) {
 function renderQueryState(loading: boolean, error: Error | null) {
   if (loading) {
     return (
-      <StatusBadge tone="blue">
-        <Loader2 className="h-3.5 w-3.5 animate-spin" />
-        Loading
-      </StatusBadge>
+      <div className="flex justify-center py-6">
+        <div className="inline-flex h-11 w-20 items-center justify-center rounded-full border border-sky-100 bg-white shadow-sm shadow-sky-100/70">
+          <LoadingDotsIcon className="h-6 w-10" />
+        </div>
+      </div>
     )
   }
   if (error) {
@@ -629,6 +630,33 @@ function renderQueryState(loading: boolean, error: Error | null) {
     )
   }
   return null
+}
+
+function LoadingRingIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} fill="hsl(228, 97%, 42%)" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <path d="M12,1A11,11,0,1,0,23,12,11,11,0,0,0,12,1Zm0,19a8,8,0,1,1,8-8A8,8,0,0,1,12,20Z" opacity=".25" />
+      <path d="M12,4a8,8,0,0,1,7.89,6.7A1.53,1.53,0,0,0,21.38,12h0a1.5,1.5,0,0,0,1.48-1.75,11,11,0,0,0-21.72,0A1.5,1.5,0,0,0,2.62,12h0a1.53,1.53,0,0,0,1.49-1.3A8,8,0,0,1,12,4Z">
+        <animateTransform attributeName="transform" type="rotate" dur="0.75s" values="0 12 12;360 12 12" repeatCount="indefinite" />
+      </path>
+    </svg>
+  )
+}
+
+function LoadingDotsIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} fill="hsl(228, 97%, 42%)" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <circle cx="4" cy="12" r="3" opacity="1">
+        <animate attributeName="opacity" begin="0s" dur="0.75s" values="1;.2;1" repeatCount="indefinite" />
+      </circle>
+      <circle cx="12" cy="12" r="3" opacity=".4">
+        <animate attributeName="opacity" begin="0.15s" dur="0.75s" values="1;.2;1" repeatCount="indefinite" />
+      </circle>
+      <circle cx="20" cy="12" r="3" opacity=".3">
+        <animate attributeName="opacity" begin="0.3s" dur="0.75s" values="1;.2;1" repeatCount="indefinite" />
+      </circle>
+    </svg>
+  )
 }
 
 function formatRecordValue(value: unknown) {
