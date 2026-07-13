@@ -20,5 +20,6 @@ dist/
 .data/
 *.local
 dnsnf-deploy/
-backend/server
-backend/backend-*
+api/server
+api/api-*
+api/dnsnf-api*
