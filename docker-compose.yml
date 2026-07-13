@@ -32,6 +32,10 @@ services:
       DNS_UPSTREAM: ${DNS_UPSTREAM:-1.1.1.1:53}
       CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:3000,http://127.0.0.1:3000}
       INTERNAL_TOKEN: ${INTERNAL_TOKEN:-change-me}
+      CLOUDFLARE_API_TOKEN: ${CLOUDFLARE_API_TOKEN:-}
+      CLOUDFLARE_ZONE_ID: ${CLOUDFLARE_ZONE_ID:-}
+      CLOUDFLARE_EMAIL: ${CLOUDFLARE_EMAIL:-}
+      CLOUDFLARE_API_KEY: ${CLOUDFLARE_API_KEY:-}
     depends_on:
       - postgres
       - redis
@@ -39,15 +43,16 @@ services:
       - dnsnf
 
   postgres:
-    image: postgres:16-alpine
+    image: postgres:18.4-alpine
     container_name: dnsnf-postgres
     restart: unless-stopped
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
       POSTGRES_DB: dns_platform
+      PGDATA: /var/lib/postgresql/18/docker
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql
       - ./backend/migrations:/docker-entrypoint-initdb.d:ro
     networks:
       - dnsnf

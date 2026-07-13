@@ -59,11 +59,11 @@ func (p *PostgresRepository) GetTrafficStatsCursor(ctx context.Context) (models.
 	return cursor, err
 }
 
-func (p *PostgresRepository) UpdateTrafficStatsCursor(ctx context.Context, checkedAt time.Time, totalRequests int64, totalVisitors int64, totalThroughDate time.Time, seededFrom30D bool) error {
+func (p *PostgresRepository) UpdateTrafficStatsCursor(ctx context.Context, checkedAt time.Time, totalRequests int64, totalVisitors int64, totalStartedDate time.Time, totalThroughDate time.Time, seededFrom30D bool) error {
 	_, err := p.pool.Exec(ctx, `
 		UPDATE traffic_stats_baseline
-		SET last_checked_at = $1, total_requests = $2, total_visitors = $3, total_through_date = $4, seeded_from_30d = $5
+		SET last_checked_at = $1, total_requests = $2, total_visitors = $3, total_started_date = $4, total_through_date = $5, seeded_from_30d = $6
 		WHERE key = 'cloudflare_requests_total'
-	`, checkedAt, totalRequests, totalVisitors, totalThroughDate, seededFrom30D)
+	`, checkedAt, totalRequests, totalVisitors, totalStartedDate, totalThroughDate, seededFrom30D)
 	return err
 }

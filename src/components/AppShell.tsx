@@ -98,7 +98,7 @@ export function AppShell() {
             className="group flex items-center gap-3"
           >
             <img
-              src="/logo.svg?v=squircle-frame"
+              src="/logo.svg"
               alt="DNS.NF"
               className="h-9 w-9 drop-shadow-sm transition-transform duration-200 group-hover:scale-110 group-active:scale-105"
             />
