@@ -14,7 +14,7 @@ import (
 
 type TrafficBaselineStore interface {
 	GetTrafficStatsCursor(ctx context.Context) (models.TrafficStatsCursor, error)
-	UpdateTrafficStatsCursor(ctx context.Context, checkedAt time.Time, totalRequests int64, totalVisitors int64, totalThroughDate time.Time, seededFrom30D bool) error
+	UpdateTrafficStatsCursor(ctx context.Context, checkedAt time.Time, totalRequests int64, totalVisitors int64, totalStartedDate time.Time, totalThroughDate time.Time, seededFrom30D bool) error
 }
 
 type TrafficCache interface {
@@ -23,19 +23,26 @@ type TrafficCache interface {
 }
 
 type CloudflareAnalyticsConfig struct {
-	Email  string
-	APIKey string
-	ZoneID string
+	APIToken string
+	Email    string
+	APIKey   string
+	ZoneID   string
 }
 
 type CloudflareAnalyticsService struct {
-	cfg        CloudflareAnalyticsConfig
-	httpClient *http.Client
-	cache      TrafficCache
-	baseline   TrafficBaselineStore
+	cfg             CloudflareAnalyticsConfig
+	httpClient      *http.Client
+	graphqlEndpoint string
+	cache           TrafficCache
+	baseline        TrafficBaselineStore
 }
 
-const trafficStatsCacheTTL = time.Hour
+const (
+	trafficStatsCacheTTL         = time.Hour
+	cloudflareGraphQLEndpoint    = "https://api.cloudflare.com/client/v4/graphql"
+	totalSeedDays                = 30
+	cloudflareDailyRetentionDays = 365
+)
 
 func NewCloudflareAnalyticsService(cfg CloudflareAnalyticsConfig, cache TrafficCache, baseline TrafficBaselineStore) *CloudflareAnalyticsService {
 	return &CloudflareAnalyticsService{
@@ -43,8 +50,9 @@ func NewCloudflareAnalyticsService(cfg CloudflareAnalyticsConfig, cache TrafficC
 		httpClient: &http.Client{
 			Timeout: 8 * time.Second,
 		},
-		cache:    cache,
-		baseline: baseline,
+		graphqlEndpoint: cloudflareGraphQLEndpoint,
+		cache:           cache,
+		baseline:        baseline,
 	}
 }
 
@@ -55,7 +63,7 @@ func (s *CloudflareAnalyticsService) TrafficStats(ctx context.Context, trafficRa
 	if trafficRange != "24h" && trafficRange != "7d" && trafficRange != "30d" && trafficRange != "total" {
 		return models.TrafficStats{}, fmt.Errorf("unsupported range: %s", trafficRange)
 	}
-	if s.cfg.Email == "" || s.cfg.APIKey == "" || s.cfg.ZoneID == "" {
+	if s.cfg.ZoneID == "" || (s.cfg.APIToken == "" && (s.cfg.Email == "" || s.cfg.APIKey == "")) {
 		return models.TrafficStats{}, errors.New("cloudflare analytics is not configured")
 	}
 
@@ -86,7 +94,7 @@ func (s *CloudflareAnalyticsService) fetchTrafficStats(ctx context.Context, traf
 		if trafficRange == "30d" {
 			days = 30
 		}
-		since := now.AddDate(0, 0, -days)
+		since := inclusiveDayRangeStart(now, days)
 		return s.queryDaily(ctx, trafficRange, since, now, true)
 	}
 
@@ -107,6 +115,7 @@ func (s *CloudflareAnalyticsService) fetchTotalTrafficStats(ctx context.Context,
 
 	today := startOfUTCDay(now)
 	yesterday := today.AddDate(0, 0, -1)
+	totalStarted := startOfUTCDay(cursor.TotalStartedDate)
 	totalThrough := startOfUTCDay(cursor.TotalThroughDate)
 	if totalThrough.IsZero() || totalThrough.After(yesterday) {
 		totalThrough = yesterday
@@ -115,37 +124,44 @@ func (s *CloudflareAnalyticsService) fetchTotalTrafficStats(ctx context.Context,
 	totalRequests := cursor.TotalRequests
 	totalVisitors := cursor.TotalVisitors
 	if !cursor.SeededFrom30D || (totalRequests == 0 && totalVisitors == 0) {
-		seedSince := today.AddDate(0, 0, -30)
-		seed, err := s.queryDailyRange(ctx, "total", seedSince, today, true)
-		if err != nil {
-			return models.TrafficStats{}, err
-		}
-		totalRequests = seed.Requests
-		totalVisitors = seed.Visitors
-		totalThrough = today
-		if err := s.baseline.UpdateTrafficStatsCursor(ctx, now, totalRequests, totalVisitors, totalThrough, true); err != nil {
-			return models.TrafficStats{}, fmt.Errorf("seed traffic baseline: %w", err)
-		}
-		return models.TrafficStats{
-			Range:     "total",
-			Requests:  totalRequests,
-			Visitors:  totalVisitors,
-			UpdatedAt: now,
-		}, nil
+		totalStarted = inclusiveDayRangeStart(today, totalSeedDays)
+		totalRequests = 0
+		totalVisitors = 0
+		totalThrough = totalStarted.AddDate(0, 0, -1)
+	} else if totalStarted.IsZero() || totalStarted.After(today) {
+		totalStarted = inclusiveDayRangeStart(today, totalSeedDays)
 	}
 
-	nextClosedDay := totalThrough.AddDate(0, 0, 1)
-	if !nextClosedDay.After(yesterday) {
-		closed, err := s.queryDailyRange(ctx, "total", nextClosedDay, yesterday, true)
+	// Recalculate the complete persisted range while it remains available from
+	// Cloudflare. This incorporates late analytics backfills instead of freezing
+	// a day's first (often incomplete) value forever.
+	reconciliationCutoff := today.AddDate(0, 0, -(cloudflareDailyRetentionDays - 1))
+	if !totalStarted.Before(reconciliationCutoff) {
+		closed := models.TrafficStats{Range: "total", UpdatedAt: now}
+		var err error
+		if !totalStarted.After(yesterday) {
+			closed, err = s.queryDailyRange(ctx, "total", totalStarted, yesterday, true)
+		}
 		if err != nil {
 			return models.TrafficStats{}, err
 		}
-		totalRequests += closed.Requests
-		totalVisitors += closed.Visitors
+		totalRequests = closed.Requests
+		totalVisitors = closed.Visitors
 		totalThrough = yesterday
-		if err := s.baseline.UpdateTrafficStatsCursor(ctx, now, totalRequests, totalVisitors, totalThrough, true); err != nil {
-			return models.TrafficStats{}, fmt.Errorf("update traffic baseline: %w", err)
+	} else {
+		nextClosedDay := totalThrough.AddDate(0, 0, 1)
+		if !nextClosedDay.After(yesterday) {
+			closed, err := s.queryDailyRange(ctx, "total", nextClosedDay, yesterday, true)
+			if err != nil {
+				return models.TrafficStats{}, err
+			}
+			totalRequests += closed.Requests
+			totalVisitors += closed.Visitors
+			totalThrough = yesterday
 		}
+	}
+	if err := s.baseline.UpdateTrafficStatsCursor(ctx, now, totalRequests, totalVisitors, totalStarted, totalThrough, true); err != nil {
+		return models.TrafficStats{}, fmt.Errorf("update traffic baseline: %w", err)
 	}
 
 	todayStats, err := s.queryDailyRange(ctx, "total", today, today, true)
@@ -190,7 +206,7 @@ func (s *CloudflareAnalyticsService) queryDailyRange(ctx context.Context, traffi
 	const query = `query($zoneTag: string!, $since: Date!, $until: Date!) {
   viewer {
     zones(filter: {zoneTag: $zoneTag}) {
-      httpRequests1dGroups(limit: 40, filter: {date_geq: $since, date_leq: $until}) {
+      httpRequests1dGroups(limit: 400, filter: {date_geq: $since, date_leq: $until}) {
         sum { requests }
         uniq { uniques }
       }
@@ -213,6 +229,13 @@ func startOfUTCDay(t time.Time) time.Time {
 	return time.Date(utc.Year(), utc.Month(), utc.Day(), 0, 0, 0, 0, time.UTC)
 }
 
+func inclusiveDayRangeStart(t time.Time, days int) time.Time {
+	if days < 1 {
+		days = 1
+	}
+	return startOfUTCDay(t).AddDate(0, 0, -(days - 1))
+}
+
 func (s *CloudflareAnalyticsService) graphql(ctx context.Context, query string, variables map[string]any, out any) error {
 	payload, err := json.Marshal(map[string]any{
 		"query":     query,
@@ -222,13 +245,17 @@ func (s *CloudflareAnalyticsService) graphql(ctx context.Context, query string, 
 		return fmt.Errorf("marshal cloudflare query: %w", err)
 	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, "https://api.cloudflare.com/client/v4/graphql", bytes.NewReader(payload))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, s.graphqlEndpoint, bytes.NewReader(payload))
 	if err != nil {
 		return fmt.Errorf("create cloudflare request: %w", err)
 	}
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("X-Auth-Email", s.cfg.Email)
-	req.Header.Set("X-Auth-Key", s.cfg.APIKey)
+	if s.cfg.APIToken != "" {
+		req.Header.Set("Authorization", "Bearer "+s.cfg.APIToken)
+	} else {
+		req.Header.Set("X-Auth-Email", s.cfg.Email)
+		req.Header.Set("X-Auth-Key", s.cfg.APIKey)
+	}
 
 	resp, err := s.httpClient.Do(req)
 	if err != nil {

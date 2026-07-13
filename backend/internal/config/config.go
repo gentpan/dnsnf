@@ -28,9 +28,10 @@ type Config struct {
 	InternalToken string
 	AnalyticsURL  string
 
-	CloudflareEmail  string
-	CloudflareAPIKey string
-	CloudflareZoneID string
+	CloudflareAPIToken string
+	CloudflareEmail    string
+	CloudflareAPIKey   string
+	CloudflareZoneID   string
 }
 
 func Load() (*Config, error) {
@@ -59,9 +60,10 @@ func Load() (*Config, error) {
 		InternalToken: getenv("INTERNAL_TOKEN", ""),
 		AnalyticsURL:  getenv("ANALYTICS_URL", ""),
 
-		CloudflareEmail:  getenv("CLOUDFLARE_EMAIL", ""),
-		CloudflareAPIKey: getenv("CLOUDFLARE_API_KEY", ""),
-		CloudflareZoneID: getenv("CLOUDFLARE_ZONE_ID", ""),
+		CloudflareAPIToken: getenv("CLOUDFLARE_API_TOKEN", ""),
+		CloudflareEmail:    getenv("CLOUDFLARE_EMAIL", ""),
+		CloudflareAPIKey:   getenv("CLOUDFLARE_API_KEY", ""),
+		CloudflareZoneID:   getenv("CLOUDFLARE_ZONE_ID", ""),
 	}
 
 	return cfg, nil

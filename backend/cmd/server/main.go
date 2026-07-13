@@ -62,9 +62,10 @@ func main() {
 	rdnsHandler := handlers.NewRdnsRecordHandler(pgRepo, cfg.InternalToken)
 	discoveryHandler := handlers.NewDiscoveryHandler(redisStore, pgRepo, cfg.DNSUpstream)
 	trafficService := services.NewCloudflareAnalyticsService(services.CloudflareAnalyticsConfig{
-		Email:  cfg.CloudflareEmail,
-		APIKey: cfg.CloudflareAPIKey,
-		ZoneID: cfg.CloudflareZoneID,
+		APIToken: cfg.CloudflareAPIToken,
+		Email:    cfg.CloudflareEmail,
+		APIKey:   cfg.CloudflareAPIKey,
+		ZoneID:   cfg.CloudflareZoneID,
 	}, redisStore, pgRepo)
 	trafficHandler := handlers.NewTrafficHandler(trafficService)
 
