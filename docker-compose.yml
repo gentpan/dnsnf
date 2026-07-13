@@ -16,7 +16,7 @@ services:
 
   api:
     build:
-      context: ./backend
+      context: ./api
       dockerfile: Dockerfile
     container_name: dnsnf-api
     restart: unless-stopped
@@ -53,7 +53,7 @@ services:
       PGDATA: /var/lib/postgresql/18/docker
     volumes:
       - postgres_data:/var/lib/postgresql
-      - ./backend/migrations:/docker-entrypoint-initdb.d:ro
+      - ./api/migrations:/docker-entrypoint-initdb.d:ro
     networks:
       - dnsnf
 
