@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
-import { BookOpen, Database, Globe2, Layers3, Route as RouteIcon, Search, ShieldCheck, TerminalSquare, type LucideIcon } from 'lucide-react'
+import { AlertTriangle, BadgeCheck, BookOpen, Database, Globe, Globe2, HeartPulse, Layers3, MailCheck, Radar, Route as RouteIcon, Search, ShieldCheck, ShieldX, TerminalSquare, type LucideIcon } from 'lucide-react'
 import { Badge, Card, CardContent, CardHeader } from '@/components/ui'
 import { PageTitle } from '@/components/QueryPanels'
 import { seoMeta } from '@/lib/seo'
@@ -59,6 +59,55 @@ const queryDocs = [
     body: 'Use DNSSEC checks to inspect DS, DNSKEY, RRSIG, and NSEC records and understand whether a domain has DNSSEC coverage.',
     tags: ['DS', 'DNSKEY', 'RRSIG', 'NSEC'],
   },
+  {
+    title: 'SSL Certificate',
+    href: '/ssl',
+    icon: BadgeCheck,
+    body: 'Use SSL checks to inspect the TLS certificate of a domain or IP, including issuer, validity dates, chain trust, TLS version, and cipher suite.',
+    tags: ['SSL', 'TLS', 'Certificate', 'Expiry'],
+  },
+  {
+    title: 'Mail Security',
+    href: '/mail-security',
+    icon: MailCheck,
+    body: 'Use mail security checks to validate SPF, DKIM, DMARC, MTA-STS, TLS-RPT, and BIMI, including SPF include expansion and lookup counting.',
+    tags: ['SPF', 'DKIM', 'DMARC', 'BIMI'],
+  },
+  {
+    title: 'Blacklist',
+    href: '/blacklist',
+    icon: ShieldX,
+    body: 'Use blacklist checks to see whether an IPv4 address is listed on public DNS blocklists and read the listing reasons.',
+    tags: ['RBL', 'DNSBL', 'Reputation'],
+  },
+  {
+    title: 'Propagation',
+    href: '/propagation',
+    icon: Globe,
+    body: 'Use propagation checks to query a record from public resolvers across North America, Europe, and Asia, and confirm whether a recent change is visible everywhere.',
+    tags: ['Propagation', 'DoH', 'TTL'],
+  },
+  {
+    title: 'Health Check',
+    href: '/health-check',
+    icon: HeartPulse,
+    body: 'Use health checks to audit delegation consistency, nameserver reachability and diversity, SOA timers, MX resolution, and security records such as DNSSEC, SPF, DMARC, and CAA.',
+    tags: ['Audit', 'Delegation', 'DNSSEC'],
+  },
+  {
+    title: 'ECS Test',
+    href: '/ecs',
+    icon: Radar,
+    body: 'Use ECS tests to see how resolvers answer for client subnets in different regions, check echoed scopes, and detect GeoDNS steering.',
+    tags: ['ECS', 'EDNS', 'GeoDNS'],
+  },
+  {
+    title: 'Takeover',
+    href: '/takeover',
+    icon: AlertTriangle,
+    body: 'Use takeover scans to find subdomains whose CNAME records point at deleted third-party resources that could be claimed by an attacker.',
+    tags: ['Takeover', 'Dangling CNAME', 'Security'],
+  },
 ]
 
 const recordDocs = [
@@ -70,6 +119,8 @@ const recordDocs = [
   ['SOA', 'Shows zone authority metadata such as primary nameserver, serial, refresh, retry, and expiry values.'],
   ['CAA', 'Limits which certificate authorities may issue TLS certificates for a domain.'],
   ['PTR', 'Maps IP addresses back to hostnames. Use it for reverse DNS and infrastructure naming review.'],
+  ['HTTPS / SVCB', 'Service binding records with protocol hints and ECH config. Increasingly used by browsers and CDNs.'],
+  ['DS / DNSKEY / TLSA / SSHFP / NAPTR', 'Security and advanced record types for DNSSEC, DANE, SSH fingerprint, and naming authority checks.'],
 ]
 
 const faq = [

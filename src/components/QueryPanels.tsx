@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
 import {
   Activity,
+  BadgeCheck,
   Check,
   ChevronLeft,
   ChevronRight,
@@ -11,20 +12,41 @@ import {
   House,
   LockKeyhole,
   Mail,
+  MailCheck,
   Network,
   Route,
   Search,
   Server,
   ShieldCheck,
+  ShieldX,
   XCircle,
 } from 'lucide-react'
-import { api, type DnsRecordType, type DnsResolver } from '@/lib/api'
+import { api, type BlacklistData, type DnsRecordType, type DnsResolver, type ECSData, type HealthCheckData, type HealthCheckItem, type MailSecurityData, type PropagationData, type SSLInspection, type TakeoverData } from '@/lib/api'
 import { getRelatedArticles, type BlogArticle } from '@/lib/blog'
 import { Select } from './base-select'
 import { PageHero } from './page-hero'
 import { Badge, Button, Card, CardContent, CardHeader, EmptyState, Input, StatusBadge } from './ui'
 
-const recordTypes: DnsRecordType[] = ['ALL', 'A', 'AAAA', 'CNAME', 'MX', 'NS', 'TXT', 'CAA', 'SOA', 'SRV', 'PTR']
+const recordTypes: DnsRecordType[] = [
+  'ALL',
+  'A',
+  'AAAA',
+  'CNAME',
+  'MX',
+  'NS',
+  'TXT',
+  'CAA',
+  'SOA',
+  'SRV',
+  'PTR',
+  'HTTPS',
+  'SVCB',
+  'DS',
+  'DNSKEY',
+  'TLSA',
+  'SSHFP',
+  'NAPTR',
+]
 const displayRecordTypes = recordTypes.filter((recordType) => recordType !== 'ALL')
 const recordTypeOptions = recordTypes.map((value) => ({ value, label: value }))
 const resolverOptions: Array<{
@@ -85,6 +107,13 @@ function getQueryTitleIcon(title: string) {
     'Reverse MX': Mail,
     Subdomains: Network,
     DNSSEC: ShieldCheck,
+    'SSL Certificate': BadgeCheck,
+    'Mail Security': MailCheck,
+    Blacklist: ShieldX,
+    Propagation: Globe2,
+    'Health Check': Activity,
+    'ECS Test': Network,
+    Takeover: ShieldX,
   }
 
   return iconMap[title] || Activity
@@ -491,6 +520,733 @@ export function DnssecPanel() {
         <EmptyState title="No check yet" body="Enter a domain to inspect DNSSEC records." />
       )}
     </div>
+  )
+}
+
+export function SSLPanel() {
+  const [target, setTarget] = React.useState('')
+  const [port, setPort] = React.useState('')
+  const [submitted, setSubmitted] = React.useState<{ target: string; port?: number } | null>(null)
+  const query = useQuery({
+    queryKey: ['ssl', submitted?.target, submitted?.port],
+    queryFn: () => api.ssl(submitted!.target, submitted!.port),
+    enabled: !!submitted?.target,
+  })
+  const data = query.data?.data
+
+  return (
+    <div className="space-y-5">
+      <Card>
+        <CardContent>
+          <form
+            className="grid gap-3 sm:grid-cols-[1fr_120px_auto]"
+            onSubmit={(event) => {
+              event.preventDefault()
+              const nextTarget = target.trim()
+              if (!nextTarget) return
+              const parsedPort = Number(port.trim())
+              setSubmitted({
+                target: nextTarget,
+                port: Number.isInteger(parsedPort) && parsedPort >= 1 && parsedPort <= 65535 ? parsedPort : undefined,
+              })
+            }}
+          >
+            <Input value={target} onChange={(event) => setTarget(event.target.value)} placeholder="example.com or 1.1.1.1" />
+            <Input
+              value={port}
+              onChange={(event) => setPort(event.target.value.replace(/[^0-9]/g, ''))}
+              placeholder="443"
+              inputMode="numeric"
+              aria-label="Port"
+            />
+            <Button disabled={query.isFetching}>
+              {query.isFetching ? <LoadingRingIcon className="h-4 w-4" /> : <BadgeCheck className="h-4 w-4" />}
+              Check SSL
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+      {renderQueryState(query.isFetching, query.error)}
+      {data ? (
+        <SSLResult data={data} cached={query.data!.cached} />
+      ) : !query.isFetching ? (
+        <EmptyState title="No check yet" body="Enter a domain or IP to inspect its TLS certificate." />
+      ) : null}
+    </div>
+  )
+}
+
+function SSLResult({ data, cached }: { data: SSLInspection; cached: boolean }) {
+  const cert = data.certificate
+  const tone = cert.expired || !data.verified ? 'red' : cert.days_remaining <= 30 ? 'amber' : 'green'
+  const label = cert.expired
+    ? 'Expired'
+    : !data.verified
+      ? 'Not trusted'
+      : cert.days_remaining <= 30
+        ? 'Expiring soon'
+        : 'Valid'
+  const facts: Array<{ label: string; value: string }> = [
+    { label: 'Issuer', value: [cert.issuer_cn, cert.issuer_org].filter(Boolean).join(' · ') || '-' },
+    { label: 'Subject', value: [cert.subject_cn, cert.subject_org].filter(Boolean).join(' · ') || '-' },
+    { label: 'Valid from', value: formatCertDate(cert.not_before) },
+    { label: 'Valid until', value: formatCertDate(cert.not_after) },
+    { label: 'Days remaining', value: cert.expired ? '0 (expired)' : String(cert.days_remaining) },
+    { label: 'TLS version', value: data.tls_version },
+    { label: 'Cipher suite', value: data.cipher_suite },
+    { label: 'ALPN', value: data.alpn || '-' },
+    { label: 'Signature', value: cert.signature_algorithm },
+    { label: 'Public key', value: `${cert.public_key_algorithm} ${cert.public_key_bits || ''}`.trim() },
+    { label: 'Serial number', value: cert.serial_number },
+    { label: 'Server IP', value: data.ip },
+    { label: 'OCSP stapled', value: data.ocsp_stapled ? 'Yes' : 'No' },
+  ]
+  const chainRows = data.chain.map((item) => ({
+    name: item.subject_cn || item.subject_org || '(unnamed)',
+    detail: `${item.issuer_cn || item.issuer_org || 'unknown issuer'} · ${item.expired ? 'expired' : `${item.days_remaining}d left`}${item.is_ca ? ' · CA' : ''}`,
+  }))
+
+  return (
+    <div className="space-y-5">
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between bg-zinc-50/60">
+          <div>
+            <div className="font-mono text-sm font-medium">
+              {data.target}:{data.port}
+            </div>
+            <div className="mt-1 text-xs text-zinc-500">
+              {data.chain_length} certificate{data.chain_length > 1 ? 's' : ''} in chain
+              {cached ? ' · cached result' : ''}
+            </div>
+          </div>
+          <StatusBadge tone={tone}>{label}</StatusBadge>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {!data.verified && data.verify_error ? (
+            <div className="flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-700">
+              <XCircle className="mt-0.5 h-4 w-4 shrink-0" />
+              <span>Chain verification failed: {data.verify_error}</span>
+            </div>
+          ) : null}
+          <div className="grid gap-2 sm:grid-cols-2">
+            {facts.map((fact) => (
+              <div key={fact.label} className="min-w-0 rounded-md border border-zinc-200 bg-zinc-50/50 px-3 py-2">
+                <div className="text-[11px] font-medium uppercase tracking-wide text-zinc-500">{fact.label}</div>
+                <div className="mt-0.5 truncate font-mono text-xs text-zinc-900" title={fact.value}>
+                  {fact.value}
+                </div>
+              </div>
+            ))}
+          </div>
+          {data.subject_alt_names.length > 0 ? (
+            <div>
+              <div className="mb-2 text-xs font-medium uppercase text-zinc-500">
+                Subject alternative names ({data.subject_alt_names.length})
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {data.subject_alt_names.slice(0, 40).map((name) => (
+                  <Badge key={name} className="font-mono">
+                    {name}
+                  </Badge>
+                ))}
+                {data.subject_alt_names.length > 40 ? <Badge>+{data.subject_alt_names.length - 40} more</Badge> : null}
+              </div>
+            </div>
+          ) : null}
+        </CardContent>
+      </Card>
+      <Rows rows={chainRows} empty="No certificate chain returned." />
+    </div>
+  )
+}
+
+function formatCertDate(value: string) {
+  if (!value) return '-'
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return value
+  return date.toISOString().slice(0, 10)
+}
+
+export function MailSecurityPanel() {
+  const [domain, setDomain] = React.useState('')
+  const [selector, setSelector] = React.useState('')
+  const [submitted, setSubmitted] = React.useState<{ domain: string; selector?: string } | null>(null)
+  const query = useQuery({
+    queryKey: ['mail-security', submitted?.domain, submitted?.selector],
+    queryFn: () => api.mailSecurity(submitted!.domain, submitted!.selector),
+    enabled: !!submitted?.domain,
+  })
+  const data = query.data?.data
+
+  return (
+    <div className="space-y-5">
+      <Card>
+        <CardContent>
+          <form
+            className="grid gap-3 sm:grid-cols-[1fr_160px_auto]"
+            onSubmit={(event) => {
+              event.preventDefault()
+              const nextDomain = domain.trim()
+              if (!nextDomain) return
+              setSubmitted({ domain: nextDomain, selector: selector.trim() || undefined })
+            }}
+          >
+            <Input value={domain} onChange={(event) => setDomain(event.target.value)} placeholder="example.com" />
+            <Input
+              value={selector}
+              onChange={(event) => setSelector(event.target.value)}
+              placeholder="DKIM selector (optional)"
+              aria-label="DKIM selector"
+            />
+            <Button disabled={query.isFetching}>
+              {query.isFetching ? <LoadingRingIcon className="h-4 w-4" /> : <MailCheck className="h-4 w-4" />}
+              Check mail
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+      {renderQueryState(query.isFetching, query.error)}
+      {data ? (
+        <MailSecurityResult data={data} cached={query.data!.cached} />
+      ) : !query.isFetching ? (
+        <EmptyState title="No check yet" body="Enter a domain to verify SPF, DKIM, DMARC, and related mail records." />
+      ) : null}
+    </div>
+  )
+}
+
+function MailSecurityResult({ data, cached }: { data: MailSecurityData; cached: boolean }) {
+  const tone = data.status === 'strong' ? 'green' : data.status === 'partial' ? 'amber' : 'red'
+  const spfFacts: Array<{ label: string; value: string }> = [
+    { label: 'All qualifier', value: data.spf.all_qualifier || '-' },
+    { label: 'DNS lookups', value: `${data.spf.dns_lookups}/10${data.spf.lookup_limit_ok ? '' : ' (over limit)'}` },
+    { label: 'Includes', value: data.spf.includes.length ? data.spf.includes.join(', ') : '-' },
+    { label: 'ip4 / ip6', value: `${data.spf.ip4.length} / ${data.spf.ip6.length} entries` },
+  ]
+  const dmarcFacts: Array<{ label: string; value: string }> = [
+    { label: 'Policy', value: data.dmarc.policy || '-' },
+    { label: 'Subdomain policy', value: data.dmarc.subdomain_policy || '-' },
+    { label: 'Coverage', value: `${data.dmarc.pct}%` },
+    { label: 'Reports to', value: data.dmarc.rua.length ? data.dmarc.rua.join(', ') : '-' },
+  ]
+  const dkimFacts: Array<{ label: string; value: string }> = [
+    { label: 'Selector', value: data.dkim.selector || data.dkim.requested_selector || '-' },
+    { label: 'Key', value: data.dkim.found && !data.dkim.revoked ? `${data.dkim.key_type} · ~${data.dkim.key_bytes * 8} bits` : '-' },
+    { label: 'Status', value: data.dkim.revoked ? 'Revoked (empty key)' : data.dkim.found ? 'Active' : 'Not found' },
+  ]
+  const simpleRows = [
+    { name: 'MTA-STS', detail: data.mta_sts.found ? data.mta_sts.record : 'Not published', found: data.mta_sts.found },
+    { name: 'TLS-RPT', detail: data.tls_rpt.found ? data.tls_rpt.record : 'Not published', found: data.tls_rpt.found },
+    { name: 'BIMI', detail: data.bimi.found ? data.bimi.record : 'Not published', found: data.bimi.found },
+  ]
+
+  return (
+    <div className="space-y-5">
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between bg-zinc-50/60">
+          <div>
+            <div className="font-mono text-sm font-medium">{data.domain}</div>
+            <div className="mt-1 text-xs text-zinc-500">
+              Mail security posture{cached ? ' · cached result' : ''}
+            </div>
+          </div>
+          <StatusBadge tone={tone}>{data.score}/100</StatusBadge>
+        </CardHeader>
+        <CardContent className="grid gap-4">
+          <ProtocolSection title="SPF" found={data.spf.found} record={data.spf.record} warnings={data.spf.warnings} facts={spfFacts} />
+          <ProtocolSection title="DMARC" found={data.dmarc.found} record={data.dmarc.record} warnings={data.dmarc.warnings} facts={dmarcFacts} />
+          <ProtocolSection
+            title="DKIM"
+            found={data.dkim.found && !data.dkim.revoked}
+            record={data.dkim.record}
+            warnings={data.dkim.warnings}
+            facts={dkimFacts}
+          />
+          <div className="grid gap-2">
+            {simpleRows.map((row) => (
+              <div key={row.name} className="flex min-w-0 items-center justify-between gap-3 rounded-md border border-zinc-200 bg-zinc-50/50 px-3 py-2">
+                <div className="min-w-0">
+                  <span className="text-sm font-medium">{row.name}</span>
+                  <span className="ml-2 break-all font-mono text-xs text-zinc-500">{row.detail}</span>
+                </div>
+                <StatusBadge tone={row.found ? 'green' : 'zinc'}>{row.found ? 'found' : 'missing'}</StatusBadge>
+              </div>
+            ))}
+          </div>
+          {data.mx.length > 0 ? <KeyValue title="MX" value={data.mx.join('\n')} /> : null}
+        </CardContent>
+      </Card>
+    </div>
+  )
+}
+
+function ProtocolSection({
+  title,
+  found,
+  record,
+  warnings,
+  facts,
+}: {
+  title: string
+  found: boolean
+  record: string
+  warnings: string[]
+  facts: Array<{ label: string; value: string }>
+}) {
+  return (
+    <div className="min-w-0 rounded-lg border border-zinc-200 bg-white p-3">
+      <div className="mb-2 flex items-center justify-between gap-2">
+        <div className="text-sm font-medium">{title}</div>
+        <StatusBadge tone={found ? 'green' : 'red'}>{found ? 'found' : 'missing'}</StatusBadge>
+      </div>
+      {record ? (
+        <pre className="mb-2 max-h-24 overflow-auto whitespace-pre-wrap break-words rounded-md bg-zinc-950 p-2.5 text-xs leading-5 text-zinc-50">
+          {record}
+        </pre>
+      ) : null}
+      {found ? (
+        <div className="grid gap-1.5 sm:grid-cols-2">
+          {facts.map((fact) => (
+            <div key={fact.label} className="min-w-0 text-xs">
+              <span className="text-zinc-500">{fact.label}: </span>
+              <span className="break-all font-mono text-zinc-900">{fact.value}</span>
+            </div>
+          ))}
+        </div>
+      ) : null}
+      {warnings.length > 0 ? (
+        <div className="mt-2 space-y-1">
+          {warnings.map((warning) => (
+            <div key={warning} className="flex items-start gap-1.5 text-xs leading-5 text-amber-700">
+              <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-amber-500" />
+              <span>{warning}</span>
+            </div>
+          ))}
+        </div>
+      ) : null}
+    </div>
+  )
+}
+
+export function BlacklistPanel() {
+  const [ip, setIp] = React.useState('')
+  const [submitted, setSubmitted] = React.useState('')
+  const query = useQuery({
+    queryKey: ['blacklist', submitted],
+    queryFn: () => api.blacklist(submitted),
+    enabled: !!submitted,
+  })
+  const data = query.data?.data
+
+  return (
+    <div className="space-y-5">
+      <Card>
+        <CardContent>
+          <form
+            className="grid gap-3 sm:grid-cols-[1fr_auto]"
+            onSubmit={(event) => {
+              event.preventDefault()
+              setSubmitted(ip.trim())
+            }}
+          >
+            <Input value={ip} onChange={(event) => setIp(event.target.value)} placeholder="1.2.3.4" />
+            <Button disabled={query.isFetching}>
+              {query.isFetching ? <LoadingRingIcon className="h-4 w-4" /> : <ShieldX className="h-4 w-4" />}
+              Check lists
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+      {renderQueryState(query.isFetching, query.error)}
+      {data ? (
+        <BlacklistResult data={data} cached={query.data!.cached} />
+      ) : !query.isFetching ? (
+        <EmptyState title="No check yet" body="Enter an IPv4 address to check public DNS blocklists." />
+      ) : null}
+    </div>
+  )
+}
+
+function BlacklistResult({ data, cached }: { data: BlacklistData; cached: boolean }) {
+  const tone = data.status === 'clean' ? 'green' : data.status === 'attention' ? 'amber' : 'red'
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between bg-zinc-50/60">
+        <div>
+          <div className="font-mono text-sm font-medium">{data.ip}</div>
+          <div className="mt-1 text-xs text-zinc-500">
+            Listed on {data.listed_count} of {data.total_lists} blocklists{cached ? ' · cached result' : ''}
+          </div>
+        </div>
+        <StatusBadge tone={tone}>{data.status}</StatusBadge>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        {data.listed.length > 0 ? (
+          <div className="divide-y divide-zinc-100 rounded-lg border border-zinc-200">
+            {data.listed.map((row) => (
+              <div key={row.zone} className="grid gap-1 p-3 sm:grid-cols-[220px_1fr] sm:items-start">
+                <div className="min-w-0 truncate font-mono text-sm text-zinc-900">{row.zone}</div>
+                <div className="min-w-0 break-words text-xs leading-5 text-zinc-500">
+                  {row.reason || `Returned ${row.a.join(', ')}`}
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="rounded-md border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-700">
+            Not listed on any checked blocklist.
+          </div>
+        )}
+        <div className="text-xs leading-5 text-zinc-500">{data.note}</div>
+      </CardContent>
+    </Card>
+  )
+}
+
+const propagationTypeOptions = ['A', 'AAAA', 'CNAME', 'MX', 'NS', 'TXT', 'SOA', 'CAA', 'HTTPS', 'SRV'].map((value) => ({
+  value,
+  label: value,
+}))
+
+export function PropagationPanel() {
+  const [domain, setDomain] = React.useState('')
+  const [recordType, setRecordType] = React.useState('A')
+  const [submitted, setSubmitted] = React.useState<{ domain: string; type: string } | null>(null)
+  const query = useQuery({
+    queryKey: ['propagation', submitted?.domain, submitted?.type],
+    queryFn: () => api.propagation(submitted!.domain, submitted!.type),
+    enabled: !!submitted,
+  })
+  const data = query.data?.data
+
+  return (
+    <div className="space-y-5">
+      <Card>
+        <CardContent>
+          <form
+            className="grid gap-3 sm:grid-cols-[1fr_140px_auto]"
+            onSubmit={(event) => {
+              event.preventDefault()
+              const value = domain.trim()
+              if (value) setSubmitted({ domain: value, type: recordType })
+            }}
+          >
+            <Input value={domain} onChange={(event) => setDomain(event.target.value)} placeholder="example.com" />
+            <Select value={recordType} onValueChange={setRecordType} options={propagationTypeOptions} ariaLabel="Record type" />
+            <Button disabled={query.isFetching}>
+              {query.isFetching ? <LoadingRingIcon className="h-4 w-4" /> : <Globe2 className="h-4 w-4" />}
+              Check
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+      {renderQueryState(query.isFetching, query.error)}
+      {data ? (
+        <PropagationResult data={data} cached={query.data!.cached} />
+      ) : !query.isFetching ? (
+        <EmptyState
+          title="No check yet"
+          body="Enter a domain to query it from public resolvers across North America, Europe, and Asia."
+        />
+      ) : null}
+    </div>
+  )
+}
+
+function PropagationResult({ data, cached }: { data: PropagationData; cached: boolean }) {
+  const tone = !data.consistent ? 'amber' : data.successful === data.total_resolvers ? 'green' : 'blue'
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between bg-zinc-50/60">
+        <div>
+          <div className="font-mono text-sm font-medium">
+            {data.domain} · {data.type}
+          </div>
+          <div className="mt-1 text-xs text-zinc-500">
+            {data.successful} of {data.total_resolvers} resolvers answered · {data.unique_sets} unique answer set
+            {data.unique_sets === 1 ? '' : 's'}
+            {cached ? ' · cached result' : ''}
+          </div>
+        </div>
+        <StatusBadge tone={tone}>{data.consistent ? 'consistent' : 'diverged'}</StatusBadge>
+      </CardHeader>
+      <CardContent>
+        <div className="divide-y divide-zinc-100 rounded-lg border border-zinc-200">
+          {data.results.map((row) => (
+            <div key={row.resolver} className="grid gap-1 p-3 sm:grid-cols-[170px_120px_90px_1fr] sm:items-start">
+              <div className="min-w-0 truncate text-sm font-medium text-zinc-900">{row.resolver}</div>
+              <div className="text-xs leading-5 text-zinc-500">{row.region}</div>
+              <div>
+                <StatusBadge
+                  tone={row.status === 'ok' ? 'green' : row.status === 'no_data' ? 'zinc' : row.status === 'nxdomain' ? 'amber' : 'red'}
+                >
+                  {row.status}
+                </StatusBadge>
+              </div>
+              <div className="min-w-0 break-words font-mono text-xs leading-5 text-zinc-600">
+                {row.answers && row.answers.length > 0 ? row.answers.join(', ') : '—'}
+                <span className="ml-2 text-zinc-400">
+                  {row.status === 'ok' ? `TTL ${row.ttl}s · ` : ''}
+                  {row.latency_ms}ms
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
+export function HealthCheckPanel() {
+  const [domain, setDomain] = React.useState('')
+  const [submitted, setSubmitted] = React.useState('')
+  const query = useQuery({
+    queryKey: ['health-check', submitted],
+    queryFn: () => api.healthCheck(submitted),
+    enabled: !!submitted,
+  })
+  const data = query.data?.data
+
+  return (
+    <div className="space-y-5">
+      <Card>
+        <CardContent>
+          <form
+            className="grid gap-3 sm:grid-cols-[1fr_auto]"
+            onSubmit={(event) => {
+              event.preventDefault()
+              setSubmitted(domain.trim())
+            }}
+          >
+            <Input value={domain} onChange={(event) => setDomain(event.target.value)} placeholder="example.com" />
+            <Button disabled={query.isFetching}>
+              {query.isFetching ? <LoadingRingIcon className="h-4 w-4" /> : <Activity className="h-4 w-4" />}
+              Run audit
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+      {renderQueryState(query.isFetching, query.error)}
+      {data ? (
+        <HealthCheckResult data={data} cached={query.data!.cached} />
+      ) : !query.isFetching ? (
+        <EmptyState
+          title="No audit yet"
+          body="Enter a domain to audit delegation, nameservers, SOA, mail, DNSSEC, and security records."
+        />
+      ) : null}
+    </div>
+  )
+}
+
+function HealthCheckResult({ data, cached }: { data: HealthCheckData; cached: boolean }) {
+  const tone = data.status === 'healthy' ? 'green' : data.status === 'warnings' ? 'amber' : 'red'
+  const statusTone = (status: HealthCheckItem['status']) =>
+    status === 'pass' ? 'green' : status === 'warn' ? 'amber' : status === 'fail' ? 'red' : 'zinc'
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between bg-zinc-50/60">
+        <div>
+          <div className="font-mono text-sm font-medium">{data.domain}</div>
+          <div className="mt-1 text-xs text-zinc-500">
+            {data.passed} passed · {data.warned} warnings · {data.failed} failed{cached ? ' · cached result' : ''}
+          </div>
+        </div>
+        <StatusBadge tone={tone}>
+          {data.score}/100 {data.status}
+        </StatusBadge>
+      </CardHeader>
+      <CardContent>
+        <div className="divide-y divide-zinc-100 rounded-lg border border-zinc-200">
+          {data.checks.map((check) => (
+            <div key={check.id} className="grid gap-1 p-3 sm:grid-cols-[90px_200px_1fr] sm:items-start">
+              <div>
+                <StatusBadge tone={statusTone(check.status)}>{check.status}</StatusBadge>
+              </div>
+              <div className="text-sm font-medium text-zinc-900">{check.title}</div>
+              <div className="min-w-0 break-words text-xs leading-5 text-zinc-500">{check.detail}</div>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
+export function ECSPanel() {
+  const [domain, setDomain] = React.useState('')
+  const [subnet, setSubnet] = React.useState('')
+  const [submitted, setSubmitted] = React.useState<{ domain: string; subnet: string } | null>(null)
+  const query = useQuery({
+    queryKey: ['ecs', submitted?.domain, submitted?.subnet],
+    queryFn: () => api.ecs(submitted!.domain, submitted!.subnet || undefined),
+    enabled: !!submitted,
+  })
+  const data = query.data?.data
+
+  return (
+    <div className="space-y-5">
+      <Card>
+        <CardContent>
+          <form
+            className="grid gap-3 sm:grid-cols-[1fr_180px_auto]"
+            onSubmit={(event) => {
+              event.preventDefault()
+              const value = domain.trim()
+              if (value) setSubmitted({ domain: value, subnet: subnet.trim() })
+            }}
+          >
+            <Input value={domain} onChange={(event) => setDomain(event.target.value)} placeholder="www.example.com" />
+            <Input
+              value={subnet}
+              onChange={(event) => setSubnet(event.target.value)}
+              placeholder="Subnet (optional)"
+              aria-label="Client subnet"
+            />
+            <Button disabled={query.isFetching}>
+              {query.isFetching ? <LoadingRingIcon className="h-4 w-4" /> : <Network className="h-4 w-4" />}
+              Test
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+      {renderQueryState(query.isFetching, query.error)}
+      {data ? (
+        <ECSResult data={data} cached={query.data!.cached} />
+      ) : !query.isFetching ? (
+        <EmptyState
+          title="No test yet"
+          body="Enter a domain to see how resolvers answer for client subnets in different regions. Leave subnet empty to probe six regions."
+        />
+      ) : null}
+    </div>
+  )
+}
+
+function ECSResult({ data, cached }: { data: ECSData; cached: boolean }) {
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between bg-zinc-50/60">
+        <div>
+          <div className="font-mono text-sm font-medium">{data.domain}</div>
+          <div className="mt-1 text-xs text-zinc-500">
+            {data.probes.length} probes · ECS {data.ecs_honored ? 'honored by at least one resolver' : 'not echoed'}
+            {cached ? ' · cached result' : ''}
+          </div>
+        </div>
+        <StatusBadge tone={data.geodns ? 'amber' : 'green'}>{data.geodns ? 'GeoDNS variation' : 'uniform answers'}</StatusBadge>
+      </CardHeader>
+      <CardContent>
+        <div className="divide-y divide-zinc-100 rounded-lg border border-zinc-200">
+          {data.probes.map((probe, index) => (
+            <div key={`${probe.region}-${probe.resolver}-${index}`} className="grid gap-1 p-3 sm:grid-cols-[150px_150px_90px_1fr] sm:items-start">
+              <div className="text-sm font-medium text-zinc-900">{probe.region}</div>
+              <div className="font-mono text-xs leading-5 text-zinc-500">
+                {probe.subnet}
+                <span className="ml-1 text-zinc-400">via {probe.resolver}</span>
+              </div>
+              <div>
+                <StatusBadge tone={probe.status === 'ok' ? 'green' : probe.status === 'no_data' ? 'zinc' : 'red'}>
+                  {probe.status}
+                </StatusBadge>
+              </div>
+              <div className="min-w-0 break-words font-mono text-xs leading-5 text-zinc-600">
+                {probe.answers.length > 0 ? probe.answers.join(', ') : '—'}
+                <span className="ml-2 text-zinc-400">
+                  scope /{probe.echoed_scope} · {probe.latency_ms}ms
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
+export function TakeoverPanel() {
+  const [domain, setDomain] = React.useState('')
+  const [submitted, setSubmitted] = React.useState('')
+  const query = useQuery({
+    queryKey: ['takeover', submitted],
+    queryFn: () => api.takeover(submitted),
+    enabled: !!submitted,
+  })
+  const data = query.data?.data
+
+  return (
+    <div className="space-y-5">
+      <Card>
+        <CardContent>
+          <form
+            className="grid gap-3 sm:grid-cols-[1fr_auto]"
+            onSubmit={(event) => {
+              event.preventDefault()
+              setSubmitted(domain.trim())
+            }}
+          >
+            <Input value={domain} onChange={(event) => setDomain(event.target.value)} placeholder="example.com" />
+            <Button disabled={query.isFetching}>
+              {query.isFetching ? <LoadingRingIcon className="h-4 w-4" /> : <ShieldX className="h-4 w-4" />}
+              Scan
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+      {renderQueryState(query.isFetching, query.error)}
+      {data ? (
+        <TakeoverResult data={data} cached={query.data!.cached} />
+      ) : !query.isFetching ? (
+        <EmptyState
+          title="No scan yet"
+          body="Enter a domain to scan discovered subdomains for dangling CNAME records pointing at claimable hosting services."
+        />
+      ) : null}
+    </div>
+  )
+}
+
+function TakeoverResult({ data, cached }: { data: TakeoverData; cached: boolean }) {
+  const tone = data.vulnerable_count > 0 ? 'red' : data.cname_targets > 0 ? 'amber' : 'green'
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between bg-zinc-50/60">
+        <div>
+          <div className="font-mono text-sm font-medium">{data.domain}</div>
+          <div className="mt-1 text-xs text-zinc-500">
+            {data.subdomains_found} subdomains discovered · {data.checked} checked · {data.cname_targets} external CNAME
+            targets · {data.vulnerable_count} potentially vulnerable{cached ? ' · cached result' : ''}
+          </div>
+        </div>
+        <StatusBadge tone={tone}>{data.status}</StatusBadge>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        {data.findings.length > 0 ? (
+          <div className="divide-y divide-zinc-100 rounded-lg border border-zinc-200">
+            {data.findings.map((finding) => (
+              <div key={finding.subdomain} className="grid gap-1 p-3 sm:grid-cols-[100px_220px_1fr_140px] sm:items-start">
+                <div>
+                  <StatusBadge
+                    tone={finding.status === 'vulnerable' ? 'red' : finding.status === 'dangling' ? 'amber' : 'green'}
+                  >
+                    {finding.status}
+                  </StatusBadge>
+                </div>
+                <div className="min-w-0 truncate font-mono text-sm text-zinc-900">{finding.subdomain}</div>
+                <div className="min-w-0 break-words font-mono text-xs leading-5 text-zinc-500">→ {finding.cname}</div>
+                <div className="text-xs leading-5 text-zinc-500">{finding.service}</div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="rounded-md border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-700">
+            No dangling CNAME records pointing at known claimable services were found.
+          </div>
+        )}
+        <div className="text-xs leading-5 text-zinc-500">{data.note}</div>
+      </CardContent>
+    </Card>
   )
 }
 

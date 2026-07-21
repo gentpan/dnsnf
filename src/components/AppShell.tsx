@@ -3,18 +3,25 @@ import { useQuery } from '@tanstack/react-query'
 import { Link, Outlet, useRouterState } from '@tanstack/react-router'
 import {
   Activity,
+  AlertTriangle,
+  BadgeCheck,
   BookOpen,
   Braces,
   Database,
+  Globe,
+  HeartPulse,
   Newspaper,
   HelpCircle,
   LockKeyhole,
+  MailCheck,
   Network,
+  Radar,
   Search,
   Server,
   ShieldCheck,
+  ShieldX,
 } from 'lucide-react'
-import { Badge, Button, Card, CardContent, StatusBadge } from './ui'
+import { Button, Card, CardContent, StatusBadge } from './ui'
 import { api, type TrafficRange } from '@/lib/api'
 
 const LazyHelpDialogTrigger = React.lazy(() =>
@@ -29,6 +36,16 @@ const nav = [
   { to: '/reverse-mx', label: 'Reverse MX', icon: Activity },
   { to: '/rdns', label: 'rDNS', icon: ShieldCheck },
   { to: '/dnssec', label: 'DNSSEC', icon: LockKeyhole },
+  { to: '/ssl', label: 'SSL', icon: BadgeCheck },
+  { to: '/mail-security', label: 'Mail Security', icon: MailCheck },
+  { to: '/blacklist', label: 'Blacklist', icon: ShieldX },
+  { to: '/propagation', label: 'Propagation', icon: Globe },
+  { to: '/health-check', label: 'Health Check', icon: HeartPulse },
+  { to: '/ecs', label: 'ECS Test', icon: Radar },
+  { to: '/takeover', label: 'Takeover', icon: AlertTriangle },
+]
+
+const headerNav = [
   { to: '/api', label: 'Public API', icon: Braces },
   { to: '/blog', label: 'Blog', icon: Newspaper },
   { to: '/docs', label: 'Docs', icon: BookOpen },
@@ -107,14 +124,29 @@ export function AppShell() {
               <div className="text-xs text-zinc-500">DNS lookup tools</div>
             </div>
           </Link>
+          <nav className="flex items-center gap-1">
+            {headerNav.map((item) => {
+              const Icon = item.icon
+              return (
+                <Link
+                  key={item.to}
+                  to={item.to}
+                  preload="intent"
+                  preloadDelay={40}
+                  title={item.label}
+                  className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-sm text-zinc-600 transition duration-150 hover:bg-zinc-100 hover:text-zinc-950 active:scale-[0.98] [&.active]:bg-zinc-950 [&.active]:font-medium [&.active]:text-white"
+                >
+                  <Icon className="h-4 w-4" />
+                  <span className="hidden md:inline">{item.label}</span>
+                </Link>
+              )
+            })}
+          </nav>
           <div className="flex items-center gap-2">
             <StatusBadge tone={statusTone} title={statusTitle} className="gap-1.5">
               <span className="h-1.5 w-1.5 rounded-full bg-current" />
               {statusLabel}
             </StatusBadge>
-            <Badge className="hidden sm:inline-flex" title="TanStack Start + React frontend.">
-              React
-            </Badge>
             <React.Suspense
               fallback={
                 <Button variant="outline" size="icon" aria-label="Open console help">

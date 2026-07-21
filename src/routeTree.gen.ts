@@ -9,25 +9,42 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TakeoverRouteImport } from './routes/takeover'
 import { Route as SubdomainsRouteImport } from './routes/subdomains'
+import { Route as SslRouteImport } from './routes/ssl'
 import { Route as SharedNsRouteImport } from './routes/shared-ns'
 import { Route as ReverseNsRouteImport } from './routes/reverse-ns'
 import { Route as ReverseMxRouteImport } from './routes/reverse-mx'
 import { Route as ReverseIpRouteImport } from './routes/reverse-ip'
 import { Route as RdnsRouteImport } from './routes/rdns'
+import { Route as PropagationRouteImport } from './routes/propagation'
+import { Route as MailSecurityRouteImport } from './routes/mail-security'
+import { Route as HealthCheckRouteImport } from './routes/health-check'
+import { Route as EcsRouteImport } from './routes/ecs'
 import { Route as DocsRouteImport } from './routes/docs'
 import { Route as DnssecRouteImport } from './routes/dnssec'
 import { Route as DnsLookupRouteImport } from './routes/dns-lookup'
 import { Route as BlogRouteImport } from './routes/blog'
+import { Route as BlacklistRouteImport } from './routes/blacklist'
 import { Route as ApiRouteImport } from './routes/api'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as BlogIndexRouteImport } from './routes/blog.index'
 import { Route as LookupDomainRouteImport } from './routes/lookup.$domain'
 import { Route as BlogSlugRouteImport } from './routes/blog.$slug'
 
+const TakeoverRoute = TakeoverRouteImport.update({
+  id: '/takeover',
+  path: '/takeover',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SubdomainsRoute = SubdomainsRouteImport.update({
   id: '/subdomains',
   path: '/subdomains',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SslRoute = SslRouteImport.update({
+  id: '/ssl',
+  path: '/ssl',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SharedNsRoute = SharedNsRouteImport.update({
@@ -55,6 +72,26 @@ const RdnsRoute = RdnsRouteImport.update({
   path: '/rdns',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PropagationRoute = PropagationRouteImport.update({
+  id: '/propagation',
+  path: '/propagation',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MailSecurityRoute = MailSecurityRouteImport.update({
+  id: '/mail-security',
+  path: '/mail-security',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HealthCheckRoute = HealthCheckRouteImport.update({
+  id: '/health-check',
+  path: '/health-check',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EcsRoute = EcsRouteImport.update({
+  id: '/ecs',
+  path: '/ecs',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DocsRoute = DocsRouteImport.update({
   id: '/docs',
   path: '/docs',
@@ -73,6 +110,11 @@ const DnsLookupRoute = DnsLookupRouteImport.update({
 const BlogRoute = BlogRouteImport.update({
   id: '/blog',
   path: '/blog',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BlacklistRoute = BlacklistRouteImport.update({
+  id: '/blacklist',
+  path: '/blacklist',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiRoute = ApiRouteImport.update({
@@ -104,16 +146,23 @@ const BlogSlugRoute = BlogSlugRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/api': typeof ApiRoute
+  '/blacklist': typeof BlacklistRoute
   '/blog': typeof BlogRouteWithChildren
   '/dns-lookup': typeof DnsLookupRoute
   '/dnssec': typeof DnssecRoute
   '/docs': typeof DocsRoute
+  '/ecs': typeof EcsRoute
+  '/health-check': typeof HealthCheckRoute
+  '/mail-security': typeof MailSecurityRoute
+  '/propagation': typeof PropagationRoute
   '/rdns': typeof RdnsRoute
   '/reverse-ip': typeof ReverseIpRoute
   '/reverse-mx': typeof ReverseMxRoute
   '/reverse-ns': typeof ReverseNsRoute
   '/shared-ns': typeof SharedNsRoute
+  '/ssl': typeof SslRoute
   '/subdomains': typeof SubdomainsRoute
+  '/takeover': typeof TakeoverRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/lookup/$domain': typeof LookupDomainRoute
   '/blog/': typeof BlogIndexRoute
@@ -121,15 +170,22 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/api': typeof ApiRoute
+  '/blacklist': typeof BlacklistRoute
   '/dns-lookup': typeof DnsLookupRoute
   '/dnssec': typeof DnssecRoute
   '/docs': typeof DocsRoute
+  '/ecs': typeof EcsRoute
+  '/health-check': typeof HealthCheckRoute
+  '/mail-security': typeof MailSecurityRoute
+  '/propagation': typeof PropagationRoute
   '/rdns': typeof RdnsRoute
   '/reverse-ip': typeof ReverseIpRoute
   '/reverse-mx': typeof ReverseMxRoute
   '/reverse-ns': typeof ReverseNsRoute
   '/shared-ns': typeof SharedNsRoute
+  '/ssl': typeof SslRoute
   '/subdomains': typeof SubdomainsRoute
+  '/takeover': typeof TakeoverRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/lookup/$domain': typeof LookupDomainRoute
   '/blog': typeof BlogIndexRoute
@@ -138,16 +194,23 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/api': typeof ApiRoute
+  '/blacklist': typeof BlacklistRoute
   '/blog': typeof BlogRouteWithChildren
   '/dns-lookup': typeof DnsLookupRoute
   '/dnssec': typeof DnssecRoute
   '/docs': typeof DocsRoute
+  '/ecs': typeof EcsRoute
+  '/health-check': typeof HealthCheckRoute
+  '/mail-security': typeof MailSecurityRoute
+  '/propagation': typeof PropagationRoute
   '/rdns': typeof RdnsRoute
   '/reverse-ip': typeof ReverseIpRoute
   '/reverse-mx': typeof ReverseMxRoute
   '/reverse-ns': typeof ReverseNsRoute
   '/shared-ns': typeof SharedNsRoute
+  '/ssl': typeof SslRoute
   '/subdomains': typeof SubdomainsRoute
+  '/takeover': typeof TakeoverRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/lookup/$domain': typeof LookupDomainRoute
   '/blog/': typeof BlogIndexRoute
@@ -157,16 +220,23 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/api'
+    | '/blacklist'
     | '/blog'
     | '/dns-lookup'
     | '/dnssec'
     | '/docs'
+    | '/ecs'
+    | '/health-check'
+    | '/mail-security'
+    | '/propagation'
     | '/rdns'
     | '/reverse-ip'
     | '/reverse-mx'
     | '/reverse-ns'
     | '/shared-ns'
+    | '/ssl'
     | '/subdomains'
+    | '/takeover'
     | '/blog/$slug'
     | '/lookup/$domain'
     | '/blog/'
@@ -174,15 +244,22 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/api'
+    | '/blacklist'
     | '/dns-lookup'
     | '/dnssec'
     | '/docs'
+    | '/ecs'
+    | '/health-check'
+    | '/mail-security'
+    | '/propagation'
     | '/rdns'
     | '/reverse-ip'
     | '/reverse-mx'
     | '/reverse-ns'
     | '/shared-ns'
+    | '/ssl'
     | '/subdomains'
+    | '/takeover'
     | '/blog/$slug'
     | '/lookup/$domain'
     | '/blog'
@@ -190,16 +267,23 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/api'
+    | '/blacklist'
     | '/blog'
     | '/dns-lookup'
     | '/dnssec'
     | '/docs'
+    | '/ecs'
+    | '/health-check'
+    | '/mail-security'
+    | '/propagation'
     | '/rdns'
     | '/reverse-ip'
     | '/reverse-mx'
     | '/reverse-ns'
     | '/shared-ns'
+    | '/ssl'
     | '/subdomains'
+    | '/takeover'
     | '/blog/$slug'
     | '/lookup/$domain'
     | '/blog/'
@@ -208,26 +292,47 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ApiRoute: typeof ApiRoute
+  BlacklistRoute: typeof BlacklistRoute
   BlogRoute: typeof BlogRouteWithChildren
   DnsLookupRoute: typeof DnsLookupRoute
   DnssecRoute: typeof DnssecRoute
   DocsRoute: typeof DocsRoute
+  EcsRoute: typeof EcsRoute
+  HealthCheckRoute: typeof HealthCheckRoute
+  MailSecurityRoute: typeof MailSecurityRoute
+  PropagationRoute: typeof PropagationRoute
   RdnsRoute: typeof RdnsRoute
   ReverseIpRoute: typeof ReverseIpRoute
   ReverseMxRoute: typeof ReverseMxRoute
   ReverseNsRoute: typeof ReverseNsRoute
   SharedNsRoute: typeof SharedNsRoute
+  SslRoute: typeof SslRoute
   SubdomainsRoute: typeof SubdomainsRoute
+  TakeoverRoute: typeof TakeoverRoute
   LookupDomainRoute: typeof LookupDomainRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/takeover': {
+      id: '/takeover'
+      path: '/takeover'
+      fullPath: '/takeover'
+      preLoaderRoute: typeof TakeoverRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/subdomains': {
       id: '/subdomains'
       path: '/subdomains'
       fullPath: '/subdomains'
       preLoaderRoute: typeof SubdomainsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/ssl': {
+      id: '/ssl'
+      path: '/ssl'
+      fullPath: '/ssl'
+      preLoaderRoute: typeof SslRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/shared-ns': {
@@ -265,6 +370,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RdnsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/propagation': {
+      id: '/propagation'
+      path: '/propagation'
+      fullPath: '/propagation'
+      preLoaderRoute: typeof PropagationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/mail-security': {
+      id: '/mail-security'
+      path: '/mail-security'
+      fullPath: '/mail-security'
+      preLoaderRoute: typeof MailSecurityRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/health-check': {
+      id: '/health-check'
+      path: '/health-check'
+      fullPath: '/health-check'
+      preLoaderRoute: typeof HealthCheckRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/ecs': {
+      id: '/ecs'
+      path: '/ecs'
+      fullPath: '/ecs'
+      preLoaderRoute: typeof EcsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/docs': {
       id: '/docs'
       path: '/docs'
@@ -291,6 +424,13 @@ declare module '@tanstack/react-router' {
       path: '/blog'
       fullPath: '/blog'
       preLoaderRoute: typeof BlogRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/blacklist': {
+      id: '/blacklist'
+      path: '/blacklist'
+      fullPath: '/blacklist'
+      preLoaderRoute: typeof BlacklistRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api': {
@@ -346,16 +486,23 @@ const BlogRouteWithChildren = BlogRoute._addFileChildren(BlogRouteChildren)
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ApiRoute: ApiRoute,
+  BlacklistRoute: BlacklistRoute,
   BlogRoute: BlogRouteWithChildren,
   DnsLookupRoute: DnsLookupRoute,
   DnssecRoute: DnssecRoute,
   DocsRoute: DocsRoute,
+  EcsRoute: EcsRoute,
+  HealthCheckRoute: HealthCheckRoute,
+  MailSecurityRoute: MailSecurityRoute,
+  PropagationRoute: PropagationRoute,
   RdnsRoute: RdnsRoute,
   ReverseIpRoute: ReverseIpRoute,
   ReverseMxRoute: ReverseMxRoute,
   ReverseNsRoute: ReverseNsRoute,
   SharedNsRoute: SharedNsRoute,
+  SslRoute: SslRoute,
   SubdomainsRoute: SubdomainsRoute,
+  TakeoverRoute: TakeoverRoute,
   LookupDomainRoute: LookupDomainRoute,
 }
 export const routeTree = rootRouteImport

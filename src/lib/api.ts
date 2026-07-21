@@ -10,6 +10,13 @@ export type DnsRecordType =
   | 'SRV'
   | 'TXT'
   | 'CAA'
+  | 'HTTPS'
+  | 'SVCB'
+  | 'DS'
+  | 'DNSKEY'
+  | 'TLSA'
+  | 'SSHFP'
+  | 'NAPTR'
 
 export type DnsResolver = 'local' | 'cloudflare' | 'google' | 'ali' | 'tencent' | 'authoritative'
 
@@ -40,6 +47,13 @@ export type DnsRecords = {
     minttl?: number
   }
   SRV: Array<{ target: string; port: number; priority: number; weight: number }>
+  HTTPS?: string[]
+  SVCB?: string[]
+  DS?: string[]
+  DNSKEY?: string[]
+  TLSA?: string[]
+  SSHFP?: string[]
+  NAPTR?: string[]
 }
 
 export type DnsLookupData = {
@@ -90,6 +104,165 @@ export type HealthStatus = {
   timestamp?: number
   success?: boolean
   data?: { status?: string }
+}
+
+export type SSLCertificate = {
+  subject_cn: string
+  subject_org: string
+  issuer_cn: string
+  issuer_org: string
+  serial_number: string
+  version: number
+  signature_algorithm: string
+  public_key_algorithm: string
+  public_key_bits: number
+  not_before: string
+  not_after: string
+  days_remaining: number
+  expired: boolean
+  is_ca: boolean
+  self_signed: boolean
+  dns_names: string[]
+  ip_addresses: string[]
+  email_addresses: string[]
+}
+
+export type SSLInspection = {
+  target: string
+  ip: string
+  port: number
+  tls_version: string
+  cipher_suite: string
+  alpn: string
+  ocsp_stapled: boolean
+  verified: boolean
+  verify_error: string
+  chain_length: number
+  certificate: SSLCertificate
+  subject_alt_names: string[]
+  chain: SSLCertificate[]
+}
+
+export type MailSecurityCheck = {
+  found: boolean
+  record: string
+  warnings: string[]
+}
+
+export type MailSecurityData = {
+  domain: string
+  score: number
+  status: string
+  spf: MailSecurityCheck & {
+    all_qualifier: string
+    includes: string[]
+    ip4: string[]
+    ip6: string[]
+    dns_lookups: number
+    lookup_limit_ok: boolean
+  }
+  dmarc: MailSecurityCheck & {
+    policy: string
+    subdomain_policy: string
+    pct: number
+    rua: string[]
+    ruf: string[]
+    adkim: string
+    aspf: string
+  }
+  dkim: MailSecurityCheck & {
+    requested_selector: string
+    selector: string
+    key_type: string
+    key_bytes: number
+    revoked: boolean
+    probed_selectors: string[]
+  }
+  mta_sts: MailSecurityCheck & { name: string }
+  tls_rpt: MailSecurityCheck & { name: string }
+  bimi: MailSecurityCheck & { name: string }
+  mx: string[]
+}
+
+export type BlacklistData = {
+  ip: string
+  total_lists: number
+  listed_count: number
+  clean_count: number
+  status: string
+  note: string
+  listed: Array<{ zone: string; a: string[]; reason: string }>
+}
+
+export type PropagationResult = {
+  resolver: string
+  region: string
+  status: 'ok' | 'no_data' | 'nxdomain' | 'error'
+  answers: string[] | null
+  ttl: number
+  latency_ms: number
+}
+
+export type PropagationData = {
+  domain: string
+  type: string
+  total_resolvers: number
+  successful: number
+  unique_sets: number
+  consistent: boolean
+  results: PropagationResult[]
+}
+
+export type HealthCheckItem = {
+  id: string
+  title: string
+  status: 'pass' | 'warn' | 'fail' | 'info'
+  detail: string
+}
+
+export type HealthCheckData = {
+  domain: string
+  score: number
+  status: 'healthy' | 'warnings' | 'critical'
+  passed: number
+  warned: number
+  failed: number
+  checks: HealthCheckItem[]
+}
+
+export type ECSProbe = {
+  region: string
+  subnet: string
+  resolver: string
+  status: 'ok' | 'no_data' | 'nxdomain' | 'error'
+  answers: string[]
+  echoed_scope: number
+  latency_ms: number
+}
+
+export type ECSData = {
+  domain: string
+  probes: ECSProbe[]
+  geodns: boolean
+  ecs_honored: boolean
+}
+
+export type TakeoverFinding = {
+  subdomain: string
+  cname: string
+  service: string
+  status: 'vulnerable' | 'dangling' | 'active'
+}
+
+export type TakeoverData = {
+  domain: string
+  subdomains_found: number
+  checked: number
+  cname_targets: number
+  vulnerable_count: number
+  status: string
+  findings: TakeoverFinding[]
+  note: string
 }
 
 const API_BASE = (import.meta.env.VITE_API_BASE || (import.meta.env.DEV ? '/api-proxy' : 'https://api.dns.nf')).replace(/\/$/, '')
@@ -167,6 +340,15 @@ export const api = {
       '/v1/dns/dnssec',
       { domain },
     ),
+  ssl: (target: string, port?: number) => request<SSLInspection>('/v1/dns/ssl', { target, port }),
+  mailSecurity: (domain: string, selector?: string) =>
+    request<MailSecurityData>('/v1/dns/mail-security', { domain, selector }),
+  blacklist: (ip: string) => request<BlacklistData>('/v1/dns/blacklist', { ip }),
+  propagation: (domain: string, type: string) =>
+    request<PropagationData>('/v1/dns/propagation', { domain, type }),
+  healthCheck: (domain: string) => request<HealthCheckData>('/v1/dns/health-check', { domain }),
+  ecs: (domain: string, subnet?: string) => request<ECSData>('/v1/dns/ecs', { domain, subnet }),
+  takeover: (domain: string) => request<TakeoverData>('/v1/dns/takeover', { domain }),
 }
 
 export function getClientRequestStats(): ClientRequestStats {

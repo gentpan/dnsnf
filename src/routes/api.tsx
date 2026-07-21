@@ -212,6 +212,170 @@ const endpoints: ApiEndpoint[] = [
   },
   {
     method: 'GET',
+    path: '/v1/dns/ssl',
+    title: 'SSL Certificate',
+    description: 'Inspect the TLS certificate, chain trust, and negotiated connection security for a domain or IP.',
+    params: [
+      { name: 'target', type: 'string', required: true, defaultValue: 'example.com', description: 'Domain or IPv4/IPv6 address to inspect.' },
+      { name: 'port', type: 'integer', defaultValue: '443', description: 'TCP port of the TLS service.' },
+    ],
+    response: `{
+  "code": 0,
+  "data": {
+    "target": "example.com",
+    "port": 443,
+    "tls_version": "TLS 1.3",
+    "verified": true,
+    "certificate": {
+      "issuer_cn": "WE1",
+      "not_after": "2026-10-05T23:59:59Z",
+      "days_remaining": 77
+    },
+    "chain_length": 3
+  },
+  "cached": false,
+  "timestamp": 1783340000
+}`,
+  },
+  {
+    method: 'GET',
+    path: '/v1/dns/mail-security',
+    title: 'Mail Security',
+    description: 'Validate SPF, DKIM, DMARC, MTA-STS, TLS-RPT, and BIMI with a posture score.',
+    params: [
+      { name: 'domain', type: 'string', required: true, defaultValue: 'example.com', description: 'Domain to validate.' },
+      { name: 'selector', type: 'string', defaultValue: '', description: 'Optional DKIM selector. Common selectors are probed when empty.' },
+    ],
+    response: `{
+  "code": 0,
+  "data": {
+    "domain": "example.com",
+    "score": 90,
+    "status": "strong",
+    "spf": { "found": true, "all_qualifier": "~all", "dns_lookups": 1 },
+    "dmarc": { "found": true, "policy": "reject" },
+    "dkim": { "found": true, "selector": "google" }
+  },
+  "cached": false,
+  "timestamp": 1783340000
+}`,
+  },
+  {
+    method: 'GET',
+    path: '/v1/dns/blacklist',
+    title: 'IP Blacklist',
+    description: 'Check an IPv4 address against public DNS blocklists (RBL/DNSBL).',
+    params: [{ name: 'ip', type: 'string', required: true, defaultValue: '127.0.0.2', description: 'IPv4 address to check.' }],
+    response: `{
+  "code": 0,
+  "data": {
+    "ip": "127.0.0.2",
+    "total_lists": 25,
+    "listed_count": 0,
+    "status": "clean",
+    "listed": []
+  },
+  "cached": false,
+  "timestamp": 1783340000
+}`,
+  },
+  {
+    method: 'GET',
+    path: '/v1/dns/propagation',
+    title: 'Global Propagation',
+    description: 'Query a record from public DoH resolvers across North America, Europe, and Asia, and compare answer consistency.',
+    params: [
+      { name: 'domain', type: 'string', required: true, defaultValue: 'example.com', description: 'Domain to query.' },
+      { name: 'type', type: 'string', defaultValue: 'A', description: 'Record type such as A, AAAA, MX, NS, TXT, CAA, HTTPS.' },
+    ],
+    response: `{
+  "code": 0,
+  "data": {
+    "domain": "example.com",
+    "type": "A",
+    "total_resolvers": 11,
+    "successful": 11,
+    "unique_sets": 1,
+    "consistent": true,
+    "results": [
+      { "resolver": "Cloudflare", "region": "Global / US", "status": "ok", "answers": ["23.215.0.136"], "ttl": 300, "latency_ms": 210 }
+    ]
+  },
+  "cached": false,
+  "timestamp": 1783340000
+}`,
+  },
+  {
+    method: 'GET',
+    path: '/v1/dns/health-check',
+    title: 'DNS Health Check',
+    description: 'Audit delegation, nameservers, SOA, MX, DNSSEC, SPF, DMARC, and CAA with a weighted score.',
+    params: [{ name: 'domain', type: 'string', required: true, defaultValue: 'example.com', description: 'Domain to audit.' }],
+    response: `{
+  "code": 0,
+  "data": {
+    "domain": "example.com",
+    "score": 90,
+    "status": "healthy",
+    "passed": 10,
+    "warned": 1,
+    "failed": 0,
+    "checks": [
+      { "id": "ns_consistent", "title": "Delegation consistency", "status": "pass", "detail": "Parent and zone NS records match." }
+    ]
+  },
+  "cached": false,
+  "timestamp": 1783340000
+}`,
+  },
+  {
+    method: 'GET',
+    path: '/v1/dns/ecs',
+    title: 'ECS Test',
+    description: 'Probe ECS-aware resolvers with EDNS Client Subnet options from multiple regions and detect GeoDNS variation.',
+    params: [
+      { name: 'domain', type: 'string', required: true, defaultValue: 'www.example.com', description: 'Domain to query.' },
+      { name: 'subnet', type: 'string', defaultValue: '', description: 'Optional client subnet in CIDR form. Six regions are probed when empty.' },
+    ],
+    response: `{
+  "code": 0,
+  "data": {
+    "domain": "www.example.com",
+    "geodns": false,
+    "ecs_honored": true,
+    "probes": [
+      { "region": "East Asia", "subnet": "101.226.0.0/24", "resolver": "Google", "status": "ok", "answers": ["23.215.0.136"], "echoed_scope": 24, "latency_ms": 40 }
+    ]
+  },
+  "cached": false,
+  "timestamp": 1783340000
+}`,
+  },
+  {
+    method: 'GET',
+    path: '/v1/dns/takeover',
+    title: 'Subdomain Takeover',
+    description: 'Scan discovered subdomains for dangling CNAME records pointing at claimable hosting services.',
+    params: [{ name: 'domain', type: 'string', required: true, defaultValue: 'example.com', description: 'Domain to scan.' }],
+    response: `{
+  "code": 0,
+  "data": {
+    "domain": "example.com",
+    "subdomains_found": 42,
+    "checked": 42,
+    "cname_targets": 3,
+    "vulnerable_count": 0,
+    "status": "clean",
+    "findings": [
+      { "subdomain": "blog.example.com", "cname": "example.github.io", "service": "GitHub Pages", "status": "active" }
+    ]
+  },
+  "cached": false,
+  "timestamp": 1783340000
+}`,
+  },
+  {
+    method: 'GET',
     path: '/v1/dns/history',
     title: 'DNS History',
     description: 'Read passive DNS history records stored by DNS.NF.',
@@ -262,6 +426,11 @@ const recordRows = [
   ['CAA', 'Allowed certificate authorities'],
   ['SRV', 'Service target, port, priority, and weight'],
   ['PTR', 'Reverse lookup hostname'],
+  ['HTTPS / SVCB', 'Service binding parameters and ECH config'],
+  ['DS / DNSKEY', 'DNSSEC delegation and public signing keys'],
+  ['TLSA', 'DANE certificate associations'],
+  ['SSHFP', 'SSH server key fingerprints'],
+  ['NAPTR', 'Naming authority pointer rules'],
 ] satisfies Array<readonly [string, string]>
 
 const DEFAULT_ENDPOINT = endpoints[0]!
