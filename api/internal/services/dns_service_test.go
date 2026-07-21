@@ -85,6 +85,9 @@ func (mockResolver) LookupSRV(context.Context, string) ([]models.SRVRecord, erro
 func (mockResolver) LookupRDNS(context.Context, string) ([]string, error) {
 	return []string{"dns.google"}, nil
 }
+func (mockResolver) LookupRaw(context.Context, string, uint16) ([]string, error) {
+	return []string{}, nil
+}
 
 type partialNotFoundResolver struct{}
 
@@ -116,6 +119,9 @@ func (partialNotFoundResolver) LookupSRV(context.Context, string) ([]models.SRVR
 	return []models.SRVRecord{}, nil
 }
 func (partialNotFoundResolver) LookupRDNS(context.Context, string) ([]string, error) {
+	return []string{}, nil
+}
+func (partialNotFoundResolver) LookupRaw(context.Context, string, uint16) ([]string, error) {
 	return []string{}, nil
 }
 

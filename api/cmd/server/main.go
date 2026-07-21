@@ -68,6 +68,13 @@ func main() {
 		ZoneID:   cfg.CloudflareZoneID,
 	}, redisStore, pgRepo)
 	trafficHandler := handlers.NewTrafficHandler(trafficService)
+	sslHandler := handlers.NewSSLHandler(redisStore)
+	mailSecurityHandler := handlers.NewMailSecurityHandler(redisStore, cfg.DNSUpstream)
+	blacklistHandler := handlers.NewBlacklistHandler(redisStore, cfg.DNSUpstream)
+	propagationHandler := handlers.NewPropagationHandler(redisStore)
+	healthCheckHandler := handlers.NewHealthCheckHandler(redisStore, cfg.DNSUpstream)
+	ecsHandler := handlers.NewECSHandler(redisStore)
+	takeoverHandler := handlers.NewTakeoverHandler(redisStore, discoveryHandler, cfg.DNSUpstream)
 
 	loggerMW := middleware.NewRequestLogger(logger)
 	// V1: public API, 60 requests per minute.
@@ -78,7 +85,7 @@ func main() {
 	corsMW := middleware.NewCORS(cfg.CORSOrigins)
 	metricsMW := middleware.NewMetrics()
 	analyticsReporter := middleware.NewAnalyticsReporter(cfg.AnalyticsURL, cfg.InternalToken)
-	router := handlers.NewRouter(dnsHandler, historyHandler, rdnsHandler, discoveryHandler, trafficHandler, loggerMW, v1Limiter, recoveryMW, corsMW, metricsMW, v2TokenAuth, analyticsReporter)
+	router := handlers.NewRouter(dnsHandler, historyHandler, rdnsHandler, discoveryHandler, trafficHandler, sslHandler, mailSecurityHandler, blacklistHandler, propagationHandler, healthCheckHandler, ecsHandler, takeoverHandler, loggerMW, v1Limiter, recoveryMW, corsMW, metricsMW, v2TokenAuth, analyticsReporter)
 
 	server := &http.Server{
 		Addr:         ":" + cfg.Port,

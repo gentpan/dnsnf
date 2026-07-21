@@ -20,16 +20,35 @@ import (
 )
 
 var ttlByType = map[string]time.Duration{
-	"A":     time.Hour,
-	"AAAA":  time.Hour,
-	"CNAME": time.Hour,
-	"MX":    12 * time.Hour,
-	"NS":    24 * time.Hour,
-	"TXT":   6 * time.Hour,
-	"CAA":   12 * time.Hour,
-	"SOA":   12 * time.Hour,
-	"SRV":   12 * time.Hour,
-	"RDNS":  24 * time.Hour,
+	"A":      time.Hour,
+	"AAAA":   time.Hour,
+	"CNAME":  time.Hour,
+	"MX":     12 * time.Hour,
+	"NS":     24 * time.Hour,
+	"TXT":    6 * time.Hour,
+	"CAA":    12 * time.Hour,
+	"SOA":    12 * time.Hour,
+	"SRV":    12 * time.Hour,
+	"RDNS":   24 * time.Hour,
+	"HTTPS":  time.Hour,
+	"SVCB":   time.Hour,
+	"DS":     12 * time.Hour,
+	"DNSKEY": 12 * time.Hour,
+	"TLSA":   12 * time.Hour,
+	"SSHFP":  12 * time.Hour,
+	"NAPTR":  12 * time.Hour,
+}
+
+// rawRecordTypes maps record types rendered as presentation-format strings
+// to their DNS qtype codes.
+var rawRecordTypes = map[string]uint16{
+	"HTTPS":  dns.TypeHTTPS,
+	"SVCB":   dns.TypeSVCB,
+	"DS":     dns.TypeDS,
+	"DNSKEY": dns.TypeDNSKEY,
+	"TLSA":   dns.TypeTLSA,
+	"SSHFP":  dns.TypeSSHFP,
+	"NAPTR":  dns.TypeNAPTR,
 }
 
 const (
@@ -62,6 +81,7 @@ type DNSResolver interface {
 	LookupSOA(ctx context.Context, domain string) (models.SOARecord, error)
 	LookupSRV(ctx context.Context, domain string) ([]models.SRVRecord, error)
 	LookupRDNS(ctx context.Context, ip string) ([]string, error)
+	LookupRaw(ctx context.Context, domain string, qtype uint16) ([]string, error)
 }
 
 type Service struct {
@@ -263,6 +283,48 @@ func mergeRecord(recordType string, src, dst *models.DNSRecords) {
 		dst.SOA = src.SOA
 	case "SRV":
 		dst.SRV = src.SRV
+	default:
+		setRawRecord(dst, recordType, getRawRecord(src, recordType))
+	}
+}
+
+func setRawRecord(records *models.DNSRecords, recordType string, values []string) {
+	switch recordType {
+	case "HTTPS":
+		records.HTTPS = values
+	case "SVCB":
+		records.SVCB = values
+	case "DS":
+		records.DS = values
+	case "DNSKEY":
+		records.DNSKEY = values
+	case "TLSA":
+		records.TLSA = values
+	case "SSHFP":
+		records.SSHFP = values
+	case "NAPTR":
+		records.NAPTR = values
+	}
+}
+
+func getRawRecord(records *models.DNSRecords, recordType string) []string {
+	switch recordType {
+	case "HTTPS":
+		return records.HTTPS
+	case "SVCB":
+		return records.SVCB
+	case "DS":
+		return records.DS
+	case "DNSKEY":
+		return records.DNSKEY
+	case "TLSA":
+		return records.TLSA
+	case "SSHFP":
+		return records.SSHFP
+	case "NAPTR":
+		return records.NAPTR
+	default:
+		return nil
 	}
 }
 
@@ -455,7 +517,14 @@ func (s *Service) tryCache(ctx context.Context, key, recordType string, records 
 		}
 		records.SRV = v
 	default:
-		return false, fmt.Errorf("unsupported type")
+		if _, ok := rawRecordTypes[recordType]; !ok {
+			return false, fmt.Errorf("unsupported type")
+		}
+		var v []string
+		if err := s.cache.Get(ctx, key, &v); err != nil {
+			return false, err
+		}
+		setRawRecord(records, recordType, v)
 	}
 
 	return true, nil
@@ -483,7 +552,13 @@ func (s *Service) resolveAndPopulate(ctx context.Context, resolver DNSResolver, 
 	case "SRV":
 		records.SRV, err = resolver.LookupSRV(ctx, domain)
 	default:
-		return fmt.Errorf("unsupported type")
+		qtype, ok := rawRecordTypes[recordType]
+		if !ok {
+			return fmt.Errorf("unsupported type")
+		}
+		var values []string
+		values, err = resolver.LookupRaw(ctx, domain, qtype)
+		setRawRecord(records, recordType, values)
 	}
 
 	if err != nil {
@@ -525,7 +600,10 @@ func (s *Service) writeBack(ctx context.Context, target, recordType, cacheKey st
 	case "SRV":
 		payload = records.SRV
 	default:
-		return fmt.Errorf("unsupported type")
+		if _, ok := rawRecordTypes[recordType]; !ok {
+			return fmt.Errorf("unsupported type")
+		}
+		payload = getRawRecord(records, recordType)
 	}
 
 	if err := s.cache.Set(ctx, cacheKey, payload, ttlByType[recordType]); err != nil {
@@ -790,6 +868,26 @@ func (r *NetResolver) LookupSRV(ctx context.Context, domain string) ([]models.SR
 	return out, nil
 }
 
+func (r *NetResolver) LookupRaw(ctx context.Context, domain string, qtype uint16) ([]string, error) {
+	if r.useSystem {
+		// The system resolver API cannot query arbitrary types; fall back to
+		// the configured default public resolver.
+		fallback := NewNetResolver(nil)
+		return fallback.LookupRaw(ctx, domain, qtype)
+	}
+	resp, err := r.exchange(ctx, domain, qtype)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]string, 0, len(resp.Answer))
+	for _, ans := range resp.Answer {
+		if ans.Header().Rrtype == qtype {
+			out = append(out, ans.String())
+		}
+	}
+	return out, nil
+}
+
 func (r *NetResolver) LookupRDNS(ctx context.Context, ip string) ([]string, error) {
 	if r.useSystem {
 		hosts, err := r.resolver.LookupAddr(ctx, ip)
@@ -1026,6 +1124,20 @@ func (r *AuthoritativeResolver) LookupRDNS(ctx context.Context, ip string) ([]st
 	for _, ans := range resp.Answer {
 		if ptr, ok := ans.(*dns.PTR); ok {
 			out = append(out, strings.TrimSuffix(strings.ToLower(ptr.Ptr), "."))
+		}
+	}
+	return out, nil
+}
+
+func (r *AuthoritativeResolver) LookupRaw(ctx context.Context, domain string, qtype uint16) ([]string, error) {
+	resp, err := r.exchange(ctx, domain, qtype)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]string, 0, len(resp.Answer))
+	for _, ans := range resp.Answer {
+		if ans.Header().Rrtype == qtype {
+			out = append(out, ans.String())
 		}
 	}
 	return out, nil

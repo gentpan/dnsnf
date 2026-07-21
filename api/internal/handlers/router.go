@@ -14,6 +14,13 @@ func NewRouter(
 	rdns *RdnsRecordHandler,
 	discovery *DiscoveryHandler,
 	traffic *TrafficHandler,
+	ssl *SSLHandler,
+	mailSecurity *MailSecurityHandler,
+	blacklist *BlacklistHandler,
+	propagation *PropagationHandler,
+	healthCheck *HealthCheckHandler,
+	ecs *ECSHandler,
+	takeover *TakeoverHandler,
 	loggerMW *middleware.RequestLogger,
 	v1Limiter *middleware.RateLimiter,
 	recoverer *middleware.Recovery,
@@ -36,6 +43,13 @@ func NewRouter(
 	v1Mux.HandleFunc("/v1/dns/reverse-ns", discovery.ReverseNS)
 	v1Mux.HandleFunc("/v1/dns/reverse-mx", discovery.ReverseMX)
 	v1Mux.HandleFunc("/v1/dns/dnssec", discovery.DNSSEC)
+	v1Mux.HandleFunc("/v1/dns/ssl", ssl.SSL)
+	v1Mux.HandleFunc("/v1/dns/mail-security", mailSecurity.MailSecurity)
+	v1Mux.HandleFunc("/v1/dns/blacklist", blacklist.Blacklist)
+	v1Mux.HandleFunc("/v1/dns/propagation", propagation.Propagation)
+	v1Mux.HandleFunc("/v1/dns/health-check", healthCheck.HealthCheck)
+	v1Mux.HandleFunc("/v1/dns/ecs", ecs.ECS)
+	v1Mux.HandleFunc("/v1/dns/takeover", takeover.Takeover)
 	v1Mux.HandleFunc("/v1/dns/stats/overview", discovery.StatsOverview)
 	v1Mux.HandleFunc("/v1/dns/stats/traffic", traffic.Stats)
 	v1Mux.HandleFunc("/v1/dns/resolvers/system", dns.SystemResolvers)
@@ -54,6 +68,13 @@ func NewRouter(
 	})
 	v2Mux.HandleFunc("/v2/dns/rdns", rdns.Search)
 	v2Mux.HandleFunc("/v2/dns/rdns-records", rdns.Upsert)
+	v2Mux.HandleFunc("/v2/dns/ssl", ssl.SSL)
+	v2Mux.HandleFunc("/v2/dns/mail-security", mailSecurity.MailSecurity)
+	v2Mux.HandleFunc("/v2/dns/blacklist", blacklist.Blacklist)
+	v2Mux.HandleFunc("/v2/dns/propagation", propagation.Propagation)
+	v2Mux.HandleFunc("/v2/dns/health-check", healthCheck.HealthCheck)
+	v2Mux.HandleFunc("/v2/dns/ecs", ecs.ECS)
+	v2Mux.HandleFunc("/v2/dns/takeover", takeover.Takeover)
 
 	// 公共路由 - 健康检查等
 	publicMux.HandleFunc("/health", dns.Health)

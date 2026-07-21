@@ -9,18 +9,25 @@ import (
 var domainRegex = regexp.MustCompile(`^(?i)([a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,}$`)
 
 var supportedTypes = map[string]struct{}{
-	"ALL":   {},
-	"A":     {},
-	"AAAA":  {},
-	"CNAME": {},
-	"MX":    {},
-	"NS":    {},
-	"TXT":   {},
-	"CAA":   {},
-	"SOA":   {},
-	"SRV":   {},
-	"PTR":   {},
-	"RDNS":  {},
+	"ALL":    {},
+	"A":      {},
+	"AAAA":   {},
+	"CNAME":  {},
+	"MX":     {},
+	"NS":     {},
+	"TXT":    {},
+	"CAA":    {},
+	"SOA":    {},
+	"SRV":    {},
+	"PTR":    {},
+	"RDNS":   {},
+	"HTTPS":  {},
+	"SVCB":   {},
+	"DS":     {},
+	"DNSKEY": {},
+	"TLSA":   {},
+	"SSHFP":  {},
+	"NAPTR":  {},
 }
 
 func NormalizeDomain(domain string) string {
@@ -49,5 +56,5 @@ func NormalizeRecordType(t string) (string, error) {
 }
 
 func AllRecordTypes() []string {
-	return []string{"A", "AAAA", "CNAME", "MX", "NS", "TXT", "CAA", "SOA", "SRV"}
+	return []string{"A", "AAAA", "CNAME", "MX", "NS", "TXT", "CAA", "SOA", "SRV", "HTTPS"}
 }

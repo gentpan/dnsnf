@@ -25,6 +25,15 @@ type DNSRecords struct {
 	CAA   []CAARecord `json:"CAA"`
 	SOA   SOARecord   `json:"SOA"`
 	SRV   []SRVRecord `json:"SRV"`
+
+	// Raw record types rendered as presentation-format strings.
+	HTTPS  []string `json:"HTTPS,omitempty"`
+	SVCB   []string `json:"SVCB,omitempty"`
+	DS     []string `json:"DS,omitempty"`
+	DNSKEY []string `json:"DNSKEY,omitempty"`
+	TLSA   []string `json:"TLSA,omitempty"`
+	SSHFP  []string `json:"SSHFP,omitempty"`
+	NAPTR  []string `json:"NAPTR,omitempty"`
 }
 
 type MXRecord struct {
